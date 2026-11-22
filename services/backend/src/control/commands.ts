@@ -145,9 +145,10 @@ export class CommandService {
         this.toVerify.delete(id);
         rec.verified = true;
         void this.update(rec);
+        void this.alerts.resolve(`cmd_unverified:${rec.deviceId}`, 'a later command was verified');
       } else if (now > rec.deadline) {
         this.toVerify.delete(id);
-        void this.alerts.raise(`cmd_unverified:${rec.cmdId}`, {
+        void this.alerts.raise(`cmd_unverified:${rec.deviceId}`, {
           type: 'device_offline', severity: 'warning', deviceId: rec.deviceId,
           message: `${rec.type} acknowledged by ${rec.deviceId} but its effect is not visible in telemetry`,
         });

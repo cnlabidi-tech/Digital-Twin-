@@ -6,6 +6,8 @@
  *   - confirmed THEFT -> stop the pump (policy auto_stop_on_theft)
  *
  * Interlocks (security by design):
+ *   - Automatic stop only for an UNAMBIGUOUS loss (pump and outlet relations
+ *     within 3 sigma); otherwise the operator decides.
  *   - NO automatic action while the data-integrity alarm is open: otherwise an
  *     attacker could inject false data that "looks like" a leak and use the
  *     twin itself to shut the pipeline down (denial of service through FDI).
@@ -48,13 +50,18 @@ export class Supervisor {
     const { rows } = await pool.query('SELECT * FROM control_policy WHERE id = 1');
     if (rows[0]) this.policy = { autoStopOnLeak: rows[0].auto_stop_on_leak, autoStopOnTheft: rows[0].auto_stop_on_theft };
 
-    this.twin.on('loss_confirmed', (i: { kind: 'leak' | 'theft'; segment?: string; lossLpm: number }) => void this.onLoss(i));
+    this.twin.on('loss_confirmed', (i: { kind: 'leak' | 'theft'; segment?: string; lossLpm: number; unambiguous: boolean }) => void this.onLoss(i));
   }
 
-  private async onLoss(i: { kind: 'leak' | 'theft'; segment?: string; lossLpm: number }): Promise<void> {
+  private async onLoss(i: { kind: 'leak' | 'theft'; segment?: string; lossLpm: number; unambiguous: boolean }): Promise<void> {
     const wanted = i.kind === 'leak' ? this.policy.autoStopOnLeak : this.policy.autoStopOnTheft;
     if (!wanted) {
       await this.alerts.event('command', 'warning', `Confirmed ${i.kind}: automatic stop disabled by policy - operator action required`);
+      return;
+    }
+    if (!i.unambiguous) {
+      await this.alerts.event('command', 'warning', `Confirmed ${i.kind} but the pump/outlet relations are not clean: automatic stop withheld, operator confirmation required`);
+      await this.audit?.record({ actor: 'auto:twin', action: 'auto.stop', target: 'node-inlet', result: 'denied', details: { reason: 'loss not unambiguous', kind: i.kind } });
       return;
     }
     if (this.integrityInDoubt()) {

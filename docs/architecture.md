@@ -1,6 +1,6 @@
 # Architecture - Pipeline Digital Twin
 
-> Status: **Phase 0** (living document - updated at the end of every phase).
+> Status: **Phases 0-9 done** (hardware integration pending the parts).
 > Diagrams are written in [Mermaid](https://mermaid.js.org/); GitHub renders them
 > directly. To export them as images for the thesis, paste them into
 > <https://mermaid.live> and download SVG/PNG.
@@ -291,4 +291,4 @@ The suggested stack is kept, with the adjustments marked **(changed)** or
 | 6 | Security layer + attack scripts | Done |
 | 7 | ESP32 firmware | Done |
 | 8 | Hardware integration + calibration | Tools done (hardware pending) |
-| 9 | Results, metrics, demo script | - |
+| 9 | Results, metrics, demo script | Done |

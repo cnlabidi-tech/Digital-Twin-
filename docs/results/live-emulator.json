@@ -1,0 +1,96 @@
+{
+  "date": "2026-11-22T17:46:38.227Z",
+  "mode": "emulator",
+  "rows": [
+    {
+      "scenario": "Leak segment A (0.5 L/min, sudden)",
+      "expected": "leak, segment A, pump stopped",
+      "ok": true,
+      "outcome": "leak, segment A, pump stopped",
+      "detectS": 3.072,
+      "stopS": 7.067,
+      "verifiedS": 7.673,
+      "detail": "Leak detected: 0.51 L/min lost (14 %), segment A, ~0.92 m from P1. abrupt onset (rise 2.5 s)"
+    },
+    {
+      "scenario": "Leak segment B (0.5 L/min, sudden)",
+      "expected": "leak, segment B, pump stopped",
+      "ok": true,
+      "outcome": "leak, segment B, pump stopped",
+      "detectS": 3.324,
+      "stopS": 7.753,
+      "verifiedS": 8.421,
+      "detail": "Leak detected: 0.49 L/min lost (13 %), segment B, ~2.99 m from P1. abrupt onset (rise 3.0 s)"
+    },
+    {
+      "scenario": "Theft segment B (0.9 L/min, 10 s opening)",
+      "expected": "theft, segment B, pump stopped",
+      "ok": true,
+      "outcome": "theft, segment B, pump stopped",
+      "detectS": 4.842,
+      "stopS": 14.207,
+      "verifiedS": 14.777,
+      "detail": "Theft suspected: 0.78 L/min lost (21 %), segment B, ~3.10 m from P1. gradual onset (rise 6.5 s): valve opened by hand"
+    },
+    {
+      "scenario": "Outlet valve change (operating change)",
+      "expected": "no alarm",
+      "ok": true,
+      "outcome": "no alarm (45 s)",
+      "detail": ""
+    },
+    {
+      "scenario": "FDI: compromised inlet forges F1 +0.6 L/min",
+      "expected": "integrity alarm, no leak alarm, no shutdown",
+      "ok": true,
+      "detectS": 4.335,
+      "outcome": "integrity alarm, no shutdown",
+      "detail": "Measurements violate the physics - suspect F1: possible false data injection or sensor fault. A flow imbalance of 0.57 L/min is also seen bu"
+    },
+    {
+      "scenario": "Leak segment A (0.5 L/min, sudden)",
+      "expected": "leak, segment A, pump stopped",
+      "ok": true,
+      "outcome": "leak, segment A, pump stopped",
+      "detectS": 2.806,
+      "stopS": 7.32,
+      "verifiedS": 7.896,
+      "detail": "Leak detected: 0.52 L/min lost (14 %), segment A, ~0.88 m from P1. abrupt onset (rise 3.0 s)"
+    },
+    {
+      "scenario": "Leak segment B (0.5 L/min, sudden)",
+      "expected": "leak, segment B, pump stopped",
+      "ok": true,
+      "outcome": "leak, segment B, pump stopped",
+      "detectS": 2.805,
+      "stopS": 6.81,
+      "verifiedS": 7.389,
+      "detail": "Leak detected: 0.45 L/min lost (12 %), segment B, ~2.89 m from P1. abrupt onset (rise 3.0 s)"
+    },
+    {
+      "scenario": "Theft segment B (0.9 L/min, 10 s opening)",
+      "expected": "theft, segment B, pump stopped",
+      "ok": true,
+      "outcome": "theft, segment B, pump stopped",
+      "detectS": 4.859,
+      "stopS": 15.293,
+      "verifiedS": 15.808,
+      "detail": "Theft suspected: 0.81 L/min lost (21 %), segment B, ~3.11 m from P1. gradual onset (rise 7.5 s): valve opened by hand"
+    },
+    {
+      "scenario": "Outlet valve change (operating change)",
+      "expected": "no alarm",
+      "ok": true,
+      "outcome": "no alarm (45 s)",
+      "detail": ""
+    },
+    {
+      "scenario": "FDI: compromised inlet forges F1 +0.6 L/min",
+      "expected": "integrity alarm, no leak alarm, no shutdown",
+      "ok": true,
+      "detectS": 4.077,
+      "outcome": "integrity alarm, no shutdown",
+      "detail": "Measurements violate the physics - suspect F1: possible false data injection or sensor fault. A flow imbalance of 0.63 L/min is also seen bu"
+    }
+  ]
+}

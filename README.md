@@ -10,8 +10,9 @@ See **[docs/architecture.md](docs/architecture.md)** for the full design and dia
 ## Prerequisites
 
 - Docker Desktop (or Docker Engine) with Docker Compose v2
-- Node.js 20+ (needed from Phase 1)
+- Node.js 20+ (22 recommended)
 - Git
+- For the firmware: PlatformIO (VS Code extension or `pip install platformio`); for host firmware tests: g++ and OpenSSL headers
 
 ## Quick start
 
@@ -49,4 +50,36 @@ For development without Docker for the Node services: `npm install`, then
 6. Security layer + attack scripts - **done** (see docs/security.md, `npm run all -w @twin/attacks`)
 7. ESP32 firmware - **done** (see firmware/README.md, `npm run test:firmware`)
 8. Hardware integration + calibration - **tools done, waiting for hardware** (see docs/integration-guide.md)
-9. Results, metrics, demo script
+9. Results, metrics, demo script - **done** (see docs/results/README.md, docs/demo-script.md)
+
+## Headline results (emulator physics, see docs/results)
+
+- Leak detection **97 %** (naive mass balance 40 %), 100 % above ~3 % of the flow, median 3-6 s
+- **0** false alarms in 6 h of normal operation with 111 operating changes
+- Right segment **98 %**, mean position error 0.21 m on a 4 m pipe; leak vs theft 91 %
+- False data injection detected **100 %**, **0 %** false automatic shutdowns (simple detectors: 13-15 %)
+- Live end-to-end tests 10/10; attack scripts **24/24** blocked
+
+## Useful commands
+
+| Command | What |
+|---------|------|
+| `npm test` / `npm run typecheck` | unit and scenario tests / type checking of every workspace |
+| `npm run test:firmware` | firmware host tests (C++ vs TypeScript vectors, conformance of the real main.cpp) |
+| `npm run all -w @twin/attacks` | 24 attack demonstrations against the live stack |
+| `npm run check -w @twin/calibration -- --commands` | bring-up / commissioning report (real boards or emulator) |
+| `npm run offline -w @twin/evaluation` | Monte-Carlo evaluation -> docs/results/evaluation.md |
+| `npm run live -w @twin/evaluation` | end-to-end evaluation through the running stack |
+| `npm run demo -w @twin/evaluation` | narrated defence demo (Enter between steps) |
+
+## Documentation
+
+| Document | Content |
+|----------|---------|
+| [architecture.md](docs/architecture.md) | design, diagrams, technology choices |
+| [data-contract.md](docs/data-contract.md) | MQTT topics, JSON payloads, signing |
+| [twin-model.md](docs/twin-model.md) | physics model, residuals, detection, diagnosis, localisation |
+| [control.md](docs/control.md) | commands, acknowledgements, automatic actions, interlocks |
+| [security.md](docs/security.md) | threat model, defences, attack scripts, limits |
+| [hardware-wiring.md](docs/hardware-wiring.md) / [integration-guide.md](docs/integration-guide.md) | wiring, bring-up, calibration |
+| [results/README.md](docs/results/README.md) / [demo-script.md](docs/demo-script.md) | metrics, defence demo |

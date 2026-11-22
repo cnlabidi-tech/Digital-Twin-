@@ -16,7 +16,7 @@ import { DEFAULT_TOPOLOGY, type SegmentId, type SensorId, type Telemetry } from 
 import type { RaiseInput } from '../alerts/service';
 import { classify, riseTime, type OnsetPoint, type PastLoss } from './classifier';
 import { Cusum } from './cusum';
-import { diagnose, Z_VIOLATION, type Diagnosis } from './diagnosis';
+import { diagnose, LOC_TOLERANCE, Z_VIOLATION, type Diagnosis } from './diagnosis';
 import { extract, SampleBuffer, type Features } from './features';
 import { expected, fitModel, locate, RESIDUALS, residuals, type ModelParams, type ResidualName } from './model';
 
@@ -34,7 +34,7 @@ export type Intent =
   | { op: 'resolve'; key: string; note: string }
   | { op: 'event'; severity: 'info' | 'warning' | 'critical'; message: string; data?: unknown }
   | { op: 'learned'; params: ModelParams }
-  | { op: 'loss_confirmed'; kind: 'leak' | 'theft'; segment?: SegmentId; lossLpm: number };
+  | { op: 'loss_confirmed'; kind: 'leak' | 'theft'; segment?: SegmentId; lossLpm: number; unambiguous: boolean };
 
 export interface TwinState {
   ts: number;
@@ -64,6 +64,8 @@ interface ActiveLoss {
   lossLpm: number;
   lastMessageAt: number;
   baseline: number;
+  /** The pump stopped while this loss was open (automatic stop / repair). */
+  pumpStopped: boolean;
 }
 
 const finite = (f: Features) => [f.P1, f.P2, f.P3, f.F1, f.F2].every(Number.isFinite);
@@ -120,7 +122,7 @@ export class TwinCore {
     if (open.loss) {
       this.active = {
         since: 0, kind: open.loss.kind, classified: true, reason: 'restored after restart',
-        positionM: open.loss.positionM, segment: open.loss.segment, lossLpm: open.loss.lossLpm, lastMessageAt: 0, baseline: 0,
+        positionM: open.loss.positionM, segment: open.loss.segment, lossLpm: open.loss.lossLpm, lastMessageAt: 0, baseline: 0, pumpStopped: true,
       };
     }
     if (open.integrity) this.integrityOpen = true;
@@ -156,6 +158,7 @@ export class TwinCore {
 
     if (!f.pumpOn || f.F1 < 0.3) {
       this.lossStreak = this.gainStreak = 0;
+      if (this.active) this.active.pumpStopped = true;
       return { state: this.blank(end, 'idle', f), intents };
     }
 
@@ -183,8 +186,20 @@ export class TwinCore {
 
     // -------------------------------------------------------------- monitoring
     const p = this.params;
-    const r = residuals(f, p, this.RoutTracked);
-    const z = Object.fromEntries(RESIDUALS.map((k) => [k, (r[k] - p.mu[k]) / p.sigma[k]])) as Record<ResidualName, number>;
+    let r = residuals(f, p, this.RoutTracked);
+    const zOf = (res: typeof r) => Object.fromEntries(RESIDUALS.map((k) => [k, (res[k] - p.mu[k]) / p.sigma[k]])) as Record<ResidualName, number>;
+    let z = zOf(r);
+    // The outlet valve is a legitimate input the twin does not measure. When ONLY
+    // the outlet relation breaks (mass, pump and both segments still hold), the
+    // valve was moved: re-identify Rout at once. A forged P3 would also break
+    // segB/total, a forged F2 the mass balance - so this cannot hide an attack.
+    const onlyOutlet = Math.abs(z.outlet) > 3 && Math.abs(z.mass) < 3 &&
+      (['pump', 'segA', 'segB', 'total'] as const).every((k) => Math.abs(z[k]) < 3);
+    if (onlyOutlet && f.qualityOk) {
+      this.RoutTracked = f.P3 / (p.c * f.F2) ** 2;
+      r = residuals(f, p, this.RoutTracked);
+      z = zOf(r);
+    }
     const transient = end < this.transientUntil || this.commonModeChange(f);
     if (transient && end >= this.transientUntil) this.transientUntil = end + TRANSIENT_HOLD_MS;
 
@@ -217,6 +232,10 @@ export class TwinCore {
       this.locEwma = null;
     }
     const loc = rawLoc && this.locEwma ? locate2(this.locEwma, this.LA, this.LB) : null;
+    // 4-sigma uncertainty of fA / fB (pressure-drop noise / resistance / F1^2-F2^2)
+    const tol = rawLoc
+      ? { tolA: Math.max(LOC_TOLERANCE, (4 * p.sigma.segA) / p.RA / rawLoc.den), tolB: Math.max(LOC_TOLERANCE, (4 * p.sigma.segB) / p.RB / rawLoc.den) }
+      : {};
 
     // Right after a loss starts, the 4-s windows of pressures and pulse-flows
     // fill at different rates: the pressure profile is meaningless for one
@@ -226,7 +245,7 @@ export class TwinCore {
     const locSettled = this.lossOnsetTs !== null && end - this.lossOnsetTs > f.windowS * 1000 + 1000;
     const diag = transient
       ? { hypothesis: 'healthy' as const, violated: [], suspects: [], reasons: ['transient: detection paused'] }
-      : diagnose(z, lossDetected, gainDetected, locSettled ? loc : null);
+      : diagnose(z, lossDetected, gainDetected, locSettled && loc ? { ...loc, ...tol } : null);
 
     // ------------------------------------------------- data integrity (FDI / sensor)
     if (!transient) {
@@ -259,12 +278,16 @@ export class TwinCore {
     }
 
     // ---------------------------------------------------------------- loss
-    if (!transient && diag.hypothesis === 'loss' && !this.integrityOpen) {
+    // A NEW loss is only declared while the relations a leak never disturbs are
+    // clean (|z| < 3). In the 3-5 sigma grey zone the twin waits: either the
+    // pump/outlet relation crosses 5 sigma (=> data inconsistent) or it settles.
+    const cleanForNewLoss = Math.abs(z.pump) < 3 && Math.abs(z.outlet) < 3;
+    if (!transient && diag.hypothesis === 'loss' && !this.integrityOpen && (this.active || cleanForNewLoss)) {
       if (!this.active) {
         this.cusum.reset(); // start a fresh accumulation once the alarm is raised
         this.active = {
           since: end, kind: 'leak', classified: false, reason: 'classification pending',
-          positionM: null, segment: null, lossLpm, lastMessageAt: 0,
+          positionM: null, segment: null, lossLpm, lastMessageAt: 0, pumpStopped: false,
           baseline: median(this.onset.filter((o) => o.ts < end - 15_000).map((o) => o.loss)) ?? 0,
         };
       }
@@ -289,7 +312,12 @@ export class TwinCore {
           a.kind = c.kind;
           a.reason = c.reason;
           a.classified = true;
-          intents.push({ op: 'loss_confirmed', kind: c.kind, segment: a.segment ?? undefined, lossLpm: a.lossLpm });
+          // Automatic action needs an UNAMBIGUOUS loss: the relations that a real
+          // leak never disturbs must be well inside their noise (3 sigma, stricter
+          // than the 5-sigma alarm). A slowly forged flow that has not yet crossed
+          // 5 sigma on the pump relation is thus not acted upon automatically.
+          const unambiguous = Math.abs(z.pump) < 3 && Math.abs(z.outlet) < 3;
+          intents.push({ op: 'loss_confirmed', kind: c.kind, segment: a.segment ?? undefined, lossLpm: a.lossLpm, unambiguous });
           a.lastMessageAt = 0; // force alert update
         }
       }
@@ -316,7 +344,9 @@ export class TwinCore {
       if (z.mass < 2.5) this.clearStreak++;
       else this.clearStreak = 0;
       if (this.clearStreak >= CLEAR_STEPS) {
-        this.pastLosses.push({ resolvedAt: end, positionM: this.active.positionM });
+        // Only a loss that stopped BY ITSELF (pump running all along: someone closed
+        // a tap) counts for the recurrence rule - not a leak repaired after a stop.
+        if (!this.active.pumpStopped) this.pastLosses.push({ resolvedAt: end, positionM: this.active.positionM });
         this.pastLosses = this.pastLosses.filter((x) => end - x.resolvedAt < 30 * 60_000);
         this.active = null;
         this.clearStreak = 0;

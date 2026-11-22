@@ -156,7 +156,7 @@ export function locate(
   p: Pick<ModelParams, 'RA' | 'RB' | 'c' | 'mu'>,
   LA: number,
   LB: number,
-): { fA: number; fB: number; positionM: number; segment: 'A' | 'B' } | null {
+): { fA: number; fB: number; positionM: number; segment: 'A' | 'B'; den: number } | null {
   const q1 = f.F1 ** 2;
   const q2 = (p.c * f.F2) ** 2;
   const den = q1 - q2;
@@ -171,5 +171,5 @@ export function locate(
   // Decide the segment from the larger "evidence": a leak in A gives fA<1, fB~0.
   const segment: 'A' | 'B' = 1 - cA > cB ? 'A' : 'B';
   const positionM = segment === 'A' ? cA * LA : LA + cB * LB;
-  return { fA, fB, positionM, segment };
+  return { fA, fB, positionM, segment, den };
 }

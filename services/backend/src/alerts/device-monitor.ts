@@ -23,6 +23,10 @@ export class DeviceMonitor {
   constructor(private readonly alerts: AlertService) {}
 
   start(): void {
+    // Security alerts left open by a previous run: give them the normal quiet
+    // period, after which they resolve unless new rejected traffic arrives.
+    for (const a of this.alerts.openAlerts()) if (a.key.startsWith('security:')) this.lastRejection.set(a.key, Date.now());
+
     bus.on('status', ({ msg }) => {
       const key = `device_offline:${msg.deviceId}`;
       if (msg.online) {

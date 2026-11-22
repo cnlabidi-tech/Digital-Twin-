@@ -1,0 +1,19 @@
+{
+  "name": "@twin/evaluation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Phase 9: detection metrics (Monte Carlo in virtual time), live end-to-end evaluation, defence demo",
+  "type": "module",
+  "scripts": {
+    "offline": "tsx src/offline.ts",
+    "live": "tsx src/live.ts",
+    "demo": "tsx src/demo.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@twin/backend": "*",
+    "@twin/contracts": "*",
+    "@twin/emulator": "*",
+    "mqtt": "^5.16.1"
+  }
+}

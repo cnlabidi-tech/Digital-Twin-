@@ -41,7 +41,8 @@ export class PlausibilityChecker {
   check(t: Telemetry): PlausibilityFinding[] {
     const out: PlausibilityFinding[] = [];
     if (t.actuators?.pump) {
-      if (this.lastPump !== undefined && this.lastPump !== t.actuators.pump.on) this.lastPumpChange = t.ts;
+      // first sight of the pump, or a change: the next 10 s are not "steady"
+      if (this.lastPump === undefined || this.lastPump !== t.actuators.pump.on) this.lastPumpChange = t.ts;
       this.lastPump = t.actuators.pump.on;
     }
     const pumpSteady = this.lastPump === true && t.ts - this.lastPumpChange > 10_000;

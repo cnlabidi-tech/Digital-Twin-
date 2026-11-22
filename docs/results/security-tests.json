@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-22T17:04:55.280Z",
+  "date": "2026-11-22T18:07:14.731Z",
   "held": 24,
   "total": 24,
   "results": [
@@ -88,7 +88,7 @@
       "evidence": "backend rejected: {\"replayed_nonce\":1}"
     },
     {
-      "attack": "400 messages queued in 3 ms",
+      "attack": "400 messages queued in 4 ms",
       "defence": "per-device rate limit + signature check",
       "held": true,
       "evidence": "rejected 400/400: {\"bad_signature\":400}"
@@ -97,7 +97,7 @@
       "attack": "Genuine telemetry still accepted during the flood",
       "defence": "forged messages rejected before the rate limit",
       "held": true,
-      "evidence": "6 genuine messages accepted in the same 1.5 s; backend MQTT connected: true"
+      "evidence": "7 genuine messages accepted in the same 1.5 s; backend MQTT connected: true"
     },
     {
       "attack": "Send a command without logging in",
@@ -133,19 +133,19 @@
       "attack": "Forged F1 (+0.6 L/min) to fake a leak",
       "defence": "physical consistency (pump curve vs flow) + suspect isolation",
       "held": true,
-      "evidence": "FDI alarm after 4.5 s: \"Measurements violate the physics - suspect F1: possible false data injection or sensor fault. A flow imbalance\"; fake leak alarm: false; automatic stops: 0"
+      "evidence": "FDI alarm after 4.0 s: \"Measurements violate the physics - suspect F1: possible false data injection or sensor fault. A flow imbalance\"; fake leak alarm: false; automatic stops: 0"
     },
     {
       "attack": "Downstream replays \"normal\" data while a real leak happens",
       "defence": "pressure-profile feasibility + replayed-sequence detection",
       "held": true,
-      "evidence": "alarm after 3.5 s: \"Implausible P2 data: values repeat an earlier recorded sequence (replayed data)\"; automatic stop on doubtful data: 0"
+      "evidence": "alarm after 3.5 s: \"Implausible F2 data: values repeat an earlier recorded sequence (replayed data)\"; automatic stop on doubtful data: 0"
     },
     {
       "attack": "P1 frozen at its current value",
       "defence": "plausibility: real sensors are never perfectly constant",
       "held": true,
-      "evidence": "alarm after 10.1 s: \"Implausible P1 data: value frozen while the pump runs (stuck sensor or forged data)\""
+      "evidence": "alarm after 9.6 s: \"Implausible P1 data: value frozen while the pump runs (stuck sensor or forged data)\""
     }
   ]
 }

@@ -46,11 +46,16 @@ export interface Diagnosis {
   reasons: string[];
 }
 
+/**
+ * `loc.tolA/tolB`: how far fA/fB may lie outside [0, 1] before the profile is
+ * called impossible. It grows with the uncertainty of the estimate (small
+ * losses => small F1^2 - F2^2 => noisy fA/fB), never below LOC_TOLERANCE.
+ */
 export function diagnose(
   z: Record<ResidualName, number>,
   lossDetected: boolean,
   gainDetected: boolean,
-  loc: { fA: number; fB: number } | null,
+  loc: { fA: number; fB: number; tolA?: number; tolB?: number } | null,
 ): Diagnosis {
   const violated = (Object.keys(z) as ResidualName[]).filter((k) => Math.abs(z[k]) > Z_VIOLATION);
   const reasons: string[] = [];
@@ -63,8 +68,8 @@ export function diagnose(
   if (gainDetected || z.mass < -Z_VIOLATION) reasons.push('outlet flow exceeds inlet flow (fluid created)');
   let locBad = false;
   if (lossDetected && loc) {
-    const out = (f: number) => f < -LOC_TOLERANCE || f > 1 + LOC_TOLERANCE;
-    if (out(loc.fA) || out(loc.fB)) {
+    const out = (f: number, tol = LOC_TOLERANCE) => f < -tol || f > 1 + tol;
+    if (out(loc.fA, loc.tolA) || out(loc.fB, loc.tolB)) {
       locBad = true;
       reasons.push(`pressure profile impossible for a loss (fA=${loc.fA.toFixed(2)}, fB=${loc.fB.toFixed(2)})`);
     }

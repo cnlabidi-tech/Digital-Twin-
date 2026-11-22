@@ -63,6 +63,18 @@ Each residual is standardised: `z = (r - μ) / σ`, with μ, σ measured during 
   or the pump command changes, detection pauses for 8 s. A leak moves the flows
   in opposite directions (F1 up, F2 down), so it is never hidden by this rule.
 
+### Robustness rules (added during the Phase 9 evaluation)
+
+- **Outlet valve moved**: if ONLY the outlet relation breaks (mass, pump and both
+  segments hold), Rout is re-identified at once - a valve change is not an attack.
+  A forged P3 also breaks segB/total; a forged F2 breaks the mass balance.
+- **Grey zone**: a new loss is only declared while the pump and outlet relations
+  are within 3 sigma; between 3 and 5 sigma the twin waits one more step.
+- **Adaptive localisation tolerance**: fA/fB may exceed [0, 1] by 4x their own
+  uncertainty (larger for small losses), never less than 0.35.
+- **Automatic action** (control) needs an unambiguous loss (pump/outlet < 3 sigma)
+  and no open integrity alarm.
+
 ## 6. Diagnosis: real loss or false data?
 
 1. Loss and the relations that must hold (pump, outlet) hold, and the localisation
@@ -103,10 +115,14 @@ Limit: needs a loss large enough that F1² - F2² is measurable (about > 0.05 L/
 
 Physically both are an opening to atmosphere. The twin uses **behaviour**:
 - rise time (20-80 %) of the 4-s loss: step (leak) ~2.4 s, hand-opened valve (theft) > 5 s;
-- recurrence: a loss that stops and reappears at the same place within 10 min = theft.
+- recurrence: a loss that stops BY ITSELF (pump still running) and reappears at the
+  same place within 10 min = theft (a leak repaired after a pump stop does not count).
 This is a stated heuristic; its limits are discussed in the thesis.
 
 ## 9. Validation (automated tests, virtual time)
+
+Full statistics (400 leaks, 100 thefts, 6 h normal operation, 108 attacks):
+[results/evaluation.md](results/evaluation.md).
 
 | Test | Expected | Result |
 |------|----------|--------|
