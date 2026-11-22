@@ -1,0 +1,52 @@
+# =============================================================================
+# Pipeline Digital Twin - local stack
+# -----------------------------------------------------------------------------
+# Phase 0 contains only the infrastructure services:
+#   - mosquitto   : MQTT broker (ESP32s / emulator <-> platform)
+#   - timescaledb : PostgreSQL + TimescaleDB (time-series storage)
+# Application services (backend, dashboard, emulator) are added in later
+# phases, each as its own service in this same file.
+# =============================================================================
+name: pipeline-twin
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.20
+    container_name: twin-mosquitto
+    restart: unless-stopped
+    ports:
+      # Plain MQTT bound to localhost only (dev). TLS listener 8883 comes in Phase 6.
+      - "127.0.0.1:${MQTT_PORT:-1883}:1883"
+    volumes:
+      - ./infra/mosquitto/config:/mosquitto/config:ro
+      - mosquitto-data:/mosquitto/data
+    healthcheck:
+      # Publish to a test topic; succeeds only if the broker accepts connections.
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "health/check", "-m", "ok", "-q", "1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  timescaledb:
+    image: timescale/timescaledb:2.17.2-pg16
+    container_name: twin-timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-twin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-dev-only}
+      POSTGRES_DB: ${POSTGRES_DB:-pipeline_twin}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # SQL files in this folder run once, on first start with an empty volume.
+      - ./infra/db/init:/docker-entrypoint-initdb.d:ro
+      - timescale-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mosquitto-data:
+  timescale-data:

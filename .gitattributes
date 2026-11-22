@@ -1,0 +1,2 @@
+# Force LF so shell scripts and configs work inside Linux containers even on Windows
+* text=auto eol=lf

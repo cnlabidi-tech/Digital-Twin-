@@ -1,0 +1,24 @@
+# Dependencies & builds
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+
+# PlatformIO
+firmware/**/.pio/
+firmware/**/.vscode/
+
+# Environment & secrets (never commit real credentials or keys)
+.env
+*.key
+*.pem
+*.crt
+!infra/**/README*
+secrets/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.log

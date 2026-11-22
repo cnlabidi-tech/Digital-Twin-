@@ -1,0 +1,22 @@
+{
+  "name": "pipeline-digital-twin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Digital twin of a water-pipe prototype for leak/theft detection with a cybersecurity layer (M2 thesis project).",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*",
+    "tools/*"
+  ],
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f",
+    "infra:reset": "docker compose down -v",
+    "smoke": "bash scripts/smoke-test.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
