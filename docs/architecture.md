@@ -290,5 +290,5 @@ The suggested stack is kept, with the adjustments marked **(changed)** or
 | 5 | Bidirectional control | Done |
 | 6 | Security layer + attack scripts | Done |
 | 7 | ESP32 firmware | Done |
-| 8 | Hardware integration + calibration | - |
+| 8 | Hardware integration + calibration | Tools done (hardware pending) |
 | 9 | Results, metrics, demo script | - |

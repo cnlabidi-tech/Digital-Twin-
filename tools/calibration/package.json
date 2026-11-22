@@ -1,0 +1,16 @@
+{
+  "name": "@twin/calibration",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hardware bring-up and calibration tools (work with the real boards and with the emulator)",
+  "type": "module",
+  "scripts": {
+    "check": "tsx src/check.ts",
+    "cal": "tsx src/calibrate.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@twin/contracts": "*",
+    "mqtt": "^5.16.1"
+  }
+}

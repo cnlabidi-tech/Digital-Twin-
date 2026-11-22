@@ -15,7 +15,7 @@ import {
 import { signMessage } from '@twin/contracts/signing';
 import { createAttack, type Attack, type AttackSpec } from './attacks';
 import { EmulatedDevice, type DeviceOptions } from './device';
-import { coeffFromRate } from './hydraulics';
+import { coeffFromRate, type HydraulicParams } from './hydraulics';
 import { Plant, type FaultType, type TapSpec } from './plant';
 
 export const TICK_MS = 50;
@@ -43,8 +43,21 @@ export interface TapRequest {
   id?: string;
 }
 
+/**
+ * Hydraulic parameters can be overridden with EMU_HYDRAULICS (JSON), e.g. the
+ * values identified on the real rig by `npm run cal -w @twin/calibration -- emulator-params`.
+ */
+function hydraulicsFromEnv(): Partial<HydraulicParams> {
+  try {
+    return process.env.EMU_HYDRAULICS ? (JSON.parse(process.env.EMU_HYDRAULICS) as Partial<HydraulicParams>) : {};
+  } catch {
+    console.error('[emulator] EMU_HYDRAULICS is not valid JSON - using defaults');
+    return {};
+  }
+}
+
 export class Emulator {
-  readonly plant = new Plant();
+  readonly plant = new Plant(hydraulicsFromEnv());
   readonly devices: Record<DeviceId, EmulatedDevice>;
   private attacks = new Map<string, Attack>();
   private ticker?: NodeJS.Timeout;
