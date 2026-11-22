@@ -5,6 +5,7 @@
  */
 import { EventEmitter } from 'node:events';
 import type { Ack, Status, Telemetry } from '@twin/contracts';
+import type { Alert, EventRow } from './alerts/service';
 
 export interface Received<T> {
   msg: T;
@@ -29,6 +30,12 @@ export interface BusEvents {
   status: [Received<Status>];
   ack: [Received<Ack>];
   rejected: [Rejection];
+  alert: [Alert];
+  event: [EventRow];
+  /** Twin state snapshot (Phase 4). */
+  twin: [unknown];
+  /** Command lifecycle update (Phase 5). */
+  command: [unknown];
 }
 
 class TypedBus extends EventEmitter {

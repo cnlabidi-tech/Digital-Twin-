@@ -285,7 +285,7 @@ The suggested stack is kept, with the adjustments marked **(changed)** or
 | 0 | Repo, Docker Compose, architecture | Done |
 | 1 | Data contract + device emulator | Done |
 | 2 | Ingestion + time-series storage | Done |
-| 3 | Dashboard | - |
+| 3 | Dashboard | Done |
 | 4 | Twin model + detection | - |
 | 5 | Bidirectional control | - |
 | 6 | Security layer + attack scripts | - |

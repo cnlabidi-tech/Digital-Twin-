@@ -29,18 +29,19 @@ Stop: `docker compose down` - Wipe all data: `docker compose down -v`
 |---------|---------|-------|
 | MQTT broker | `localhost:1883` | Dev only, anonymous; TLS + auth in Phase 6 |
 | TimescaleDB | `localhost:5432` | Credentials from `.env` |
-| Backend API | `http://localhost:4000/api/health` | REST (WebSocket in Phase 3) |
+| Dashboard + API | `http://localhost:4000` | Built dashboard, REST `/api`, WebSocket `/ws` |
 | Emulator control API | `http://localhost:4100/api/state` | Only with `--profile sim` |
 
 For development without Docker for the Node services: `npm install`, then
-`npm start -w @twin/backend` and `npm run emu` in two terminals.
+`npm start -w @twin/backend`, `npm run emu` and `npm run dev -w @twin/dashboard`
+(http://localhost:5173) in three terminals.
 
 ## Project phases
 
 0. Repo, Docker Compose, architecture - **done**
 1. Data contract + device emulator - **done** (see docs/data-contract.md, tools/emulator)
 2. Ingestion + time-series storage - **done** (see services/backend)
-3. Dashboard
+3. Dashboard - **done** (http://localhost:5173 in dev, http://localhost:4000 in Docker)
 4. Twin model + detection
 5. Bidirectional control
 6. Security layer + attack scripts
