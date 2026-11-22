@@ -1,0 +1,7 @@
+{
+  "name": "twin",
+  "version": "1.0.0",
+  "description": "Pipeline twin node library: protocol (signing, anti-replay), sensor conversions, network, calibration",
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

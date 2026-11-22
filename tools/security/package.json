@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "setup": "tsx src/setup.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "firmware-secrets": "tsx src/firmware-secrets.ts"
   },
   "dependencies": {
     "@twin/contracts": "*",

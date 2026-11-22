@@ -47,6 +47,6 @@ For development without Docker for the Node services: `npm install`, then
 4. Twin model + detection - **done** (see docs/twin-model.md)
 5. Bidirectional control - **done** (see docs/control.md)
 6. Security layer + attack scripts - **done** (see docs/security.md, `npm run all -w @twin/attacks`)
-7. ESP32 firmware
+7. ESP32 firmware - **done** (see firmware/README.md, `npm run test:firmware`)
 8. Hardware integration + calibration
 9. Results, metrics, demo script

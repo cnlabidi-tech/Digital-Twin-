@@ -18,7 +18,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "emu": "npm start -w @twin/emulator --",
-    "monitor": "npm run monitor -w @twin/emulator --"
+    "monitor": "npm run monitor -w @twin/emulator --",
+    "test:firmware": "bash firmware/test/host/run.sh"
   },
   "engines": {
     "node": ">=20"
