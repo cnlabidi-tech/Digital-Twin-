@@ -4,7 +4,9 @@
  *   MQTT --> ingestion/handler --bus--> ingestion/writer --> TimescaleDB
  *                                  |--> alerts/device-monitor --> alerts/events
  *                                  |--> twin/engine (model, detection) --> alerts, twin_state
- *                                  \--> api/ws (live dashboard)
+ *                                  |--> api/ws (live dashboard)
+ *                                  \--> control (acks, verification)
+ *   twin 'loss_confirmed' --> control/supervisor --> commands --> MQTT cmd topic --> device
  *   Fastify HTTP API + WebSocket on API_HOST:API_PORT
  *   In production the built dashboard (apps/dashboard/dist) is served at "/".
  */
@@ -17,10 +19,13 @@ import { topicAll } from '@twin/contracts';
 import { DeviceMonitor } from './alerts/device-monitor';
 import { AlertService } from './alerts/service';
 import { alertRoutes } from './api/routes-alerts';
+import { controlRoutes } from './api/routes-control';
 import { dataRoutes } from './api/routes-data';
 import { twinRoutes } from './api/routes-twin';
 import { LiveState, wsRoutes } from './api/ws';
 import { config } from './config';
+import { CommandService } from './control/commands';
+import { Supervisor } from './control/supervisor';
 import { migrate } from './db/migrate';
 import { pool, waitForDb } from './db/pool';
 import { handleMessage, stats } from './ingestion/handler';
@@ -56,6 +61,10 @@ async function main() {
   });
   mqtt.on('message', (topic, payload) => handleMessage(topic, payload));
 
+  const commands = new CommandService(mqtt, alerts, log);
+  const supervisor = new Supervisor(commands, twin, alerts);
+  await supervisor.start();
+
   // --- HTTP API
   await app.register(cors, { origin: config.api.corsOrigin });
   const ws = await wsRoutes(app, { live, alerts });
@@ -68,6 +77,7 @@ async function main() {
   await app.register(dataRoutes);
   await app.register(alertRoutes, { alerts });
   await app.register(twinRoutes, { twin });
+  await app.register(controlRoutes, { supervisor });
 
   const dashboard = resolve(import.meta.dirname, '../../../apps/dashboard/dist');
   if (existsSync(dashboard)) {

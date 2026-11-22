@@ -174,3 +174,19 @@ td.unit { color: var(--muted); font-size: 11px; }
 .tag.diag-healthy { color: var(--ok); }
 .tag.diag-loss { color: #fca5a5; border-color: rgba(239,68,68,.5); }
 .tag.diag-inconsistent { color: #fdba74; border-color: rgba(249,115,22,.6); }
+
+/* ---------- control panel */
+.control .row { margin-bottom: 8px; }
+.tag.okbg { color: var(--ok); border-color: rgba(34,197,94,.4); }
+.policy { margin: 8px 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.policy label { display: flex; gap: 6px; align-items: center; }
+.hint { font-size: 11px; color: var(--muted); }
+.cmdlog { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow: auto; font-size: 12px; }
+.cmdlog li { display: grid; grid-template-columns: 70px 1fr; gap: 2px 8px; padding: 4px 0; border-bottom: 1px dashed var(--border); }
+.cmd-main { font-family: ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+.cmd-meta { grid-column: 2; color: var(--muted); font-size: 11px; }
+.chip { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; padding: 1px 6px; border-radius: 4px; background: var(--panel-2); text-align: center; height: fit-content; }
+.chip.ok { color: var(--ok); }
+.chip.bad { color: var(--danger); }
+.chip.info { color: var(--accent); }
+.field input[type=range] { padding: 0; }

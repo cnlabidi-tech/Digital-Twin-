@@ -72,5 +72,7 @@ export interface CommandUpdate {
   status: string;
   issuedBy: string;
   reason?: string;
-  [k: string]: unknown;
+  latencyMs?: number;
+  verified?: boolean;
+  createdAt?: number;
 }

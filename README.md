@@ -43,7 +43,7 @@ For development without Docker for the Node services: `npm install`, then
 2. Ingestion + time-series storage - **done** (see services/backend)
 3. Dashboard - **done** (http://localhost:5173 in dev, http://localhost:4000 in Docker)
 4. Twin model + detection - **done** (see docs/twin-model.md)
-5. Bidirectional control
+5. Bidirectional control - **done** (see docs/control.md)
 6. Security layer + attack scripts
 7. ESP32 firmware
 8. Hardware integration + calibration

@@ -112,6 +112,20 @@ export class TwinCore {
     this.cusum.reset();
   }
 
+  /**
+   * After a restart, re-attach alerts that are still open in the database so
+   * that they can be resolved when the condition clears.
+   */
+  restoreOpen(open: { loss?: { kind: 'leak' | 'theft'; segment: SegmentId | null; positionM: number | null; lossLpm: number }; integrity?: boolean }): void {
+    if (open.loss) {
+      this.active = {
+        since: 0, kind: open.loss.kind, classified: true, reason: 'restored after restart',
+        positionM: open.loss.positionM, segment: open.loss.segment, lossLpm: open.loss.lossLpm, lastMessageAt: 0, baseline: 0,
+      };
+    }
+    if (open.integrity) this.integrityOpen = true;
+  }
+
   ingest(t: Telemetry): void {
     this.buf.add(t);
   }

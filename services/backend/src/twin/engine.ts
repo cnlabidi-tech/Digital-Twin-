@@ -35,6 +35,12 @@ export class TwinEngine extends EventEmitter {
     } else {
       this.log.info('twin: no model yet, will learn a baseline');
     }
+    const loss = this.alerts.openAlerts().find((a) => a.key === 'loss');
+    const data = (loss?.data ?? {}) as { positionM?: number; lossLpm?: number };
+    this.core.restoreOpen({
+      loss: loss ? { kind: loss.type === 'theft' ? 'theft' : 'leak', segment: (loss.segment as 'A' | 'B' | null) ?? null, positionM: data.positionM ?? null, lossLpm: data.lossLpm ?? 0 } : undefined,
+      integrity: this.alerts.isOpen('integrity'),
+    });
     bus.on('telemetry', ({ msg }) => {
       if (!this.accept(msg.deviceId)) return;
       this.core.ingest(msg);

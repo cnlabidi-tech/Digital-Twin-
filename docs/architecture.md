@@ -287,7 +287,7 @@ The suggested stack is kept, with the adjustments marked **(changed)** or
 | 2 | Ingestion + time-series storage | Done |
 | 3 | Dashboard | Done |
 | 4 | Twin model + detection | Done |
-| 5 | Bidirectional control | - |
+| 5 | Bidirectional control | Done |
 | 6 | Security layer + attack scripts | - |
 | 7 | ESP32 firmware | - |
 | 8 | Hardware integration + calibration | - |

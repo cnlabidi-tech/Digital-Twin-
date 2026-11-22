@@ -1,5 +1,6 @@
 /** Dashboard layout. Later phases plug their panels into the marked slots. */
 import { AlertsPanel } from './components/AlertsPanel';
+import { ControlPanel } from './components/ControlPanel';
 import { EventHistory } from './components/EventHistory';
 import { Header } from './components/Header';
 import { LiveCharts } from './components/LiveCharts';
@@ -20,7 +21,7 @@ export function App() {
         </section>
         <aside className="col-side">
           <AlertsPanel />
-          {/* Phase 5: control panel */}
+          <ControlPanel />
           <SimPanel />
         </aside>
       </main>
