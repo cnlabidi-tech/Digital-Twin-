@@ -146,9 +146,15 @@ export function connect(): void {
       /* ignore malformed frame */
     }
   };
-  ws.onclose = () => {
+  ws.onclose = (e) => {
     state.connected = false;
     notify();
+    // 4401 = token missing/expired: go back to the login screen instead of retrying.
+    if (e.code === 4401) {
+      localStorage.removeItem('twin.token');
+      window.dispatchEvent(new Event('twin:unauthorized'));
+      return;
+    }
     setTimeout(connect, 2000);
   };
 }

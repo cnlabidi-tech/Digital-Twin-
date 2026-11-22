@@ -1,0 +1,23 @@
+{
+  "name": "@twin/attacks",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Attack scripts demonstrating each security defence (lab use against our own platform only)",
+  "type": "module",
+  "scripts": {
+    "all": "tsx src/run-all.ts",
+    "a1": "tsx src/a1-eavesdrop-mitm.ts",
+    "a2": "tsx src/a2-unauthenticated.ts",
+    "a3": "tsx src/a3-acl-spoofing.ts",
+    "a4": "tsx src/a4-forged-commands.ts",
+    "a5": "tsx src/a5-telemetry-replay-tamper.ts",
+    "a6": "tsx src/a6-flood.ts",
+    "a7": "tsx src/a7-fdi.ts",
+    "a8": "tsx src/a8-web.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@twin/contracts": "*",
+    "mqtt": "^5.16.1"
+  }
+}

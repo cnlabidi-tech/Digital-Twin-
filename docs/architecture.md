@@ -288,7 +288,7 @@ The suggested stack is kept, with the adjustments marked **(changed)** or
 | 3 | Dashboard | Done |
 | 4 | Twin model + detection | Done |
 | 5 | Bidirectional control | Done |
-| 6 | Security layer + attack scripts | - |
+| 6 | Security layer + attack scripts | Done |
 | 7 | ESP32 firmware | - |
 | 8 | Hardware integration + calibration | - |
 | 9 | Results, metrics, demo script | - |

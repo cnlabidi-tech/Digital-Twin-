@@ -6,7 +6,6 @@
  *
  *   npm run monitor -w @twin/emulator -- [--mqtt url] [--keys file] [--raw]
  */
-import { existsSync, readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import mqtt from 'mqtt';
 import {
@@ -14,15 +13,23 @@ import {
   type DeviceId, type Telemetry,
 } from '@twin/contracts';
 import { verifyMessage } from '@twin/contracts/signing';
+import { brokerUrl, caCert, readJsonSecret, secure } from './env';
 
 const { values: a } = parseArgs({
   options: { mqtt: { type: 'string' }, keys: { type: 'string' }, raw: { type: 'boolean', default: false } },
 });
-const url = a.mqtt ?? process.env.MQTT_URL ?? 'mqtt://localhost:1883';
-const keys: Partial<Record<DeviceId, string>> = a.keys && existsSync(a.keys) ? JSON.parse(readFileSync(a.keys, 'utf8')) : {};
+const url = a.mqtt ?? brokerUrl();
+const keys: Partial<Record<DeviceId, string>> = readJsonSecret(a.keys, 'device-keys.json') ?? {};
+// In secure mode the monitor logs in with the read-only "monitor" account.
+const creds = secure ? readJsonSecret<Record<string, string>>(undefined, 'mqtt-credentials.json') : undefined;
 const validators = { telemetry: validateTelemetry, status: validateStatus, cmd: validateCommand, ack: validateAck };
 
-const c = mqtt.connect(url, { clientId: `monitor-${process.pid}` });
+const c = mqtt.connect(url, {
+  clientId: secure ? 'monitor' : `monitor-${process.pid}`,
+  username: creds ? 'monitor' : undefined,
+  password: creds?.monitor,
+  ca: caCert(),
+});
 c.on('connect', () => {
   console.log(`monitor connected to ${url}, subscribed to ${TOPIC_ROOT}/#`);
   c.subscribe(`${TOPIC_ROOT}/#`);

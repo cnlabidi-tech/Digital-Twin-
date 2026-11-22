@@ -18,6 +18,7 @@ import type { WebSocket } from 'ws';
 import type { DeviceId, Status, Telemetry } from '@twin/contracts';
 import { bus } from '../bus';
 import type { AlertService } from '../alerts/service';
+import { wsAuthorized } from '../security/auth';
 
 /** Compact telemetry form sent to browsers (no nonce/signature noise). */
 export function compactTelemetry(m: Telemetry, receivedAt: number) {
@@ -64,7 +65,12 @@ export async function wsRoutes(app: FastifyInstance, opts: { live: LiveState; al
   bus.on('twin', (t) => broadcast('twin', t));
   bus.on('command', (c) => broadcast('command', c));
 
-  app.get('/ws', { websocket: true }, (socket) => {
+  app.get('/ws', { websocket: true }, (socket, req) => {
+    // Browsers cannot send an Authorization header on a WebSocket: token in ?token=
+    if (!wsAuthorized(app, req.url)) {
+      socket.close(4401, 'authentication required');
+      return;
+    }
     clients.add(socket);
     socket.send(JSON.stringify({
       type: 'snapshot',

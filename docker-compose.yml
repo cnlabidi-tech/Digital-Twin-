@@ -6,8 +6,12 @@
 #   - backend     : ingestion, twin, detection, control, API   (Phase 2+)
 #   - emulator    : fake ESP32s - only with the "sim" profile   (Phase 1)
 #
+#   npm run setup -w @twin/security      # once: certificates, credentials, keys
 #   docker compose up -d                 # platform only (real hardware)
 #   docker compose --profile sim up -d   # platform + emulator
+#
+# SECURITY_MODE (in .env): secure (default: TLS 8883, auth, ACL, signatures,
+# login) or dev (plain 1883 on localhost, anonymous, no login).
 # =============================================================================
 name: pipeline-twin
 
@@ -16,15 +20,19 @@ services:
     image: eclipse-mosquitto:2.0.20
     container_name: twin-mosquitto
     restart: unless-stopped
+    command: ["mosquitto", "-c", "/mosquitto/config/mosquitto.${SECURITY_MODE:-secure}.conf"]
     ports:
-      # Plain MQTT bound to localhost only (dev). TLS listener 8883 comes in Phase 6.
+      # dev profile: plain MQTT, localhost only
       - "127.0.0.1:${MQTT_PORT:-1883}:1883"
+      # secure profile: MQTT over TLS, reachable by the ESP32s on the LAN
+      - "${MQTTS_PORT:-8883}:8883"
     volumes:
       - ./infra/mosquitto/config:/mosquitto/config:ro
+      - ./secrets:/mosquitto/secrets:ro
       - mosquitto-data:/mosquitto/data
     healthcheck:
-      # Publish to a test topic; succeeds only if the broker accepts connections.
-      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "health/check", "-m", "ok", "-q", "1"]
+      # The broker process is up and listening (works for both profiles).
+      test: ["CMD-SHELL", "nc -z localhost 8883 || nc -z localhost 1883"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -55,8 +63,12 @@ services:
     container_name: twin-backend
     restart: unless-stopped
     command: ["npm", "start", "-w", "@twin/backend"]
+    env_file:
+      - path: ./secrets/backend.env
+        required: false
     environment:
-      MQTT_URL: mqtt://mosquitto:1883
+      SECURITY_MODE: ${SECURITY_MODE:-secure}
+      MQTT_HOST: mosquitto
       POSTGRES_HOST: timescaledb
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER:-twin}
@@ -65,6 +77,8 @@ services:
       API_HOST: 0.0.0.0
       API_PORT: 4000
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    volumes:
+      - ./secrets:/run/secrets/twin:ro
     ports:
       - "127.0.0.1:${API_PORT:-4000}:4000"
     depends_on:
@@ -77,10 +91,16 @@ services:
     container_name: twin-emulator
     restart: unless-stopped
     command: ["npm", "start", "-w", "@twin/emulator"]
+    env_file:
+      - path: ./secrets/emulator.env
+        required: false
     environment:
-      MQTT_URL: mqtt://mosquitto:1883
+      SECURITY_MODE: ${SECURITY_MODE:-secure}
+      MQTT_HOST: mosquitto
       EMU_API_HOST: 0.0.0.0
       EMU_API_PORT: 4100
+    volumes:
+      - ./secrets:/run/secrets/twin:ro
     ports:
       - "127.0.0.1:4100:4100"
     depends_on:

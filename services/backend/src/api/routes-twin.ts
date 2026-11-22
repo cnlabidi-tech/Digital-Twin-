@@ -1,20 +1,22 @@
 /**
  * Twin endpoints (Phase 4).
  *   GET  /api/twin                     current twin state + model
- *   POST /api/twin/relearn             learn a new healthy baseline (operator/admin)
+ *   POST /api/twin/relearn             learn a new healthy baseline (admin)
  *   GET  /api/twin/history?from=&to=   1 Hz residual / diagnosis history
  *   GET  /api/twin/models              learned models (audit of re-learning)
  */
 import type { FastifyInstance } from 'fastify';
 import { pool } from '../db/pool';
+import type { AuditLog } from '../security/audit';
 import type { TwinEngine } from '../twin/engine';
 
-export async function twinRoutes(app: FastifyInstance, opts: { twin: TwinEngine }) {
+export async function twinRoutes(app: FastifyInstance, opts: { twin: TwinEngine; audit: AuditLog }) {
   app.get('/api/twin', async () => ({ state: opts.twin.last, params: opts.twin.core.params }));
 
-  app.post('/api/twin/relearn', async (req) => {
-    const by = (req as { user?: { username: string } }).user?.username ?? 'operator';
+  app.post('/api/twin/relearn', { config: { role: 'admin' } }, async (req) => {
+    const by = req.user?.username ?? 'admin';
     await opts.twin.relearn(by);
+    await opts.audit.record({ actor: by, role: req.user?.role, ip: req.ip, action: 'twin.relearn', result: 'ok' });
     return { ok: true };
   });
 

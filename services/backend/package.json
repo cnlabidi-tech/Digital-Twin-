@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.4.3",
+    "@fastify/jwt": "^10.2.8",
     "@fastify/static": "^10.1.12",
     "@fastify/websocket": "^11.3.7",
     "@twin/contracts": "*",
@@ -21,8 +22,8 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@twin/emulator": "*",
     "@types/pg": "^8.23.1",
-    "pino-pretty": "^13.2.0",
-    "@twin/emulator": "*"
+    "pino-pretty": "^13.2.0"
   }
 }

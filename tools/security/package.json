@@ -1,0 +1,18 @@
+{
+  "name": "@twin/security",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Security setup: CA and TLS certificates, MQTT credentials and ACLs, device HMAC keys, initial users",
+  "type": "module",
+  "scripts": {
+    "setup": "tsx src/setup.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@twin/contracts": "*",
+    "node-forge": "^1.4.3"
+  },
+  "devDependencies": {
+    "@types/node-forge": "^1.3.14"
+  }
+}

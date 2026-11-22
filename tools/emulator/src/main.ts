@@ -3,20 +3,22 @@
  *
  *   npm start -w @twin/emulator -- [options]
  *
- *   --mqtt <url>         broker URL            (env MQTT_URL, default mqtt://localhost:1883)
+ *   --mqtt <url>         broker URL            (env MQTT_URL; default mqtts://localhost:8883 in secure
+ *                                              mode, mqtt://localhost:1883 in dev mode)
  *   --interval <ms>      telemetry period      (default 500)
  *   --api-port <port>    control API port      (env EMU_API_PORT, default 4100)
  *   --api-host <host>    control API bind      (env EMU_API_HOST, default 127.0.0.1)
  *   --scenario <file>    run a scenario file, exit when it ends (if durationS is set)
  *   --truth-log <file>   append ground-truth events (JSON lines)
- *   --keys <file>        JSON {"node-inlet":"<hex>", ...} per-device HMAC keys (Phase 6)
+ *   --keys <file>        per-device HMAC keys (default: secrets/device-keys.json if present)
+ * Credentials and CA are read from secrets/emulator.env (see tools/security).
  *   --quiet              less logging
  */
-import { existsSync, readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { DEVICE_IDS, type DeviceId } from '@twin/contracts';
 import { startApi } from './api';
 import { Emulator } from './emulator';
+import { brokerUrl, caCert, readJsonSecret, secure } from './env';
 import { loadScenario, runScenario } from './scenario';
 
 const { values: a } = parseArgs({
@@ -33,9 +35,8 @@ const { values: a } = parseArgs({
 });
 
 const env = process.env;
-const mqttUrl = a.mqtt ?? env.MQTT_URL ?? 'mqtt://localhost:1883';
-const keysPath = a.keys ?? env.EMU_KEYS_FILE;
-const keys: Partial<Record<DeviceId, string>> = keysPath && existsSync(keysPath) ? JSON.parse(readFileSync(keysPath, 'utf8')) : {};
+const mqttUrl = a.mqtt ?? brokerUrl();
+const keys: Partial<Record<DeviceId, string>> = readJsonSecret(a.keys ?? env.EMU_KEYS_FILE, 'device-keys.json') ?? {};
 
 const device = Object.fromEntries(
   DEVICE_IDS.map((id) => {
@@ -53,12 +54,12 @@ const emu = new Emulator({
   mqttUrl,
   intervalMs: Number(a.interval ?? 500),
   truthLog: a['truth-log'] ?? env.EMU_TRUTH_LOG,
-  ca: env.MQTT_CA_FILE ? readFileSync(env.MQTT_CA_FILE) : undefined,
+  ca: caCert(),
   device,
   quiet: a.quiet,
 });
 
-console.log(`[emulator] broker ${mqttUrl}, signing: ${Object.keys(keys).length ? 'ON' : 'OFF (no keys file)'}`);
+console.log(`[emulator] broker ${mqttUrl} (${secure ? 'secure' : 'dev'} mode), signing: ${Object.keys(keys).length ? 'ON' : 'OFF (no keys file)'}`);
 emu.start();
 const api = startApi(emu, Number(a['api-port'] ?? env.EMU_API_PORT ?? 4100), a['api-host'] ?? env.EMU_API_HOST ?? '127.0.0.1');
 

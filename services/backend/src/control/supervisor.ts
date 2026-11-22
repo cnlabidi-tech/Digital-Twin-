@@ -16,6 +16,7 @@
 import type { CommandType, DeviceId } from '@twin/contracts';
 import type { AlertService } from '../alerts/service';
 import { pool } from '../db/pool';
+import type { AuditLog } from '../security/audit';
 import type { TwinEngine } from '../twin/engine';
 import type { CommandService } from './commands';
 
@@ -35,7 +36,13 @@ export class Supervisor {
     private readonly commands: CommandService,
     private readonly twin: TwinEngine,
     private readonly alerts: AlertService,
+    private readonly audit?: AuditLog,
   ) {}
+
+  /** Data integrity in doubt: twin consistency alarm or any plausibility (FDI) alarm open. */
+  private integrityInDoubt(): boolean {
+    return this.twin.core.integrityAlert || this.alerts.openAlerts().some((a) => a.type === 'fdi');
+  }
 
   async start(): Promise<void> {
     const { rows } = await pool.query('SELECT * FROM control_policy WHERE id = 1');
@@ -50,12 +57,14 @@ export class Supervisor {
       await this.alerts.event('command', 'warning', `Confirmed ${i.kind}: automatic stop disabled by policy - operator action required`);
       return;
     }
-    if (this.twin.core.integrityAlert) {
+    if (this.integrityInDoubt()) {
       await this.alerts.event('command', 'critical', `Confirmed ${i.kind} but data integrity is in doubt: automatic stop BLOCKED, inspect the pipe`);
+      await this.audit?.record({ actor: 'auto:twin', action: 'auto.stop', target: 'node-inlet', result: 'denied', details: { reason: 'integrity in doubt', kind: i.kind } });
       return;
     }
     await this.alerts.event('command', 'critical', `Confirmed ${i.kind} (${i.lossLpm.toFixed(2)} L/min, segment ${i.segment ?? '?'}): stopping pump automatically`);
-    await this.commands.send('node-inlet', 'pump.set', { on: false }, `auto:twin`);
+    const rec = await this.commands.send('node-inlet', 'pump.set', { on: false }, `auto:twin`);
+    await this.audit?.record({ actor: 'auto:twin', action: 'auto.stop', target: 'node-inlet', result: 'ok', details: { kind: i.kind, lossLpm: i.lossLpm, segment: i.segment, cmdId: rec.cmdId } });
   }
 
   /** Manual command from the dashboard, with interlocks. */

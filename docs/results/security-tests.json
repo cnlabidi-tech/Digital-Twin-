@@ -1,0 +1,151 @@
+{
+  "date": "2026-11-22T17:04:55.280Z",
+  "held": 24,
+  "total": 24,
+  "results": [
+    {
+      "attack": "Connect in plain text on 1883",
+      "defence": "TLS-only broker (no plain listener)",
+      "held": true,
+      "evidence": "refused: connection closed by broker"
+    },
+    {
+      "attack": "TLS with an untrusted certificate (MITM)",
+      "defence": "clients trust only the project CA",
+      "held": true,
+      "evidence": "self-signed certificate in certificate chain"
+    },
+    {
+      "attack": "Broker reached under a spoofed name",
+      "defence": "hostname verification (SAN)",
+      "held": true,
+      "evidence": "Hostname/IP does not match certificate's altnames: IP: 127.0.0.2 is not in the cert's list: 127.0.0.1"
+    },
+    {
+      "attack": "Anonymous connection",
+      "defence": "no anonymous access, hashed per-client passwords",
+      "held": true,
+      "evidence": "Connection refused: Not authorized"
+    },
+    {
+      "attack": "Guessed password for node-inlet",
+      "defence": "no anonymous access, hashed per-client passwords",
+      "held": true,
+      "evidence": "Connection refused: Not authorized"
+    },
+    {
+      "attack": "node-downstream password reused as node-inlet",
+      "defence": "no anonymous access, hashed per-client passwords",
+      "held": true,
+      "evidence": "Connection refused: Not authorized"
+    },
+    {
+      "attack": "Publish fake telemetry / command as node-inlet",
+      "defence": "broker ACL: a device writes only pipeline/v1/<its id>/...",
+      "held": true,
+      "evidence": "messages silently dropped by the broker (monitor saw nothing)"
+    },
+    {
+      "attack": "Spy on all topics with the device account",
+      "defence": "broker ACL: a device reads only its own cmd topic",
+      "held": true,
+      "evidence": "subscription to pipeline/v1/# delivered nothing"
+    },
+    {
+      "attack": "Unsigned \"stop pump\" command",
+      "defence": "device verifies HMAC signature",
+      "held": true,
+      "evidence": "ack: rejected (missing_signature)"
+    },
+    {
+      "attack": "Command signed with a guessed key",
+      "defence": "device verifies HMAC signature",
+      "held": true,
+      "evidence": "ack: rejected (bad_signature)"
+    },
+    {
+      "attack": "Replay of a captured genuine (signed) command",
+      "defence": "device nonce cache (anti-replay)",
+      "held": true,
+      "evidence": "ack: rejected (replayed_nonce)"
+    },
+    {
+      "attack": "Fabricated unsigned telemetry",
+      "defence": "signature required",
+      "held": true,
+      "evidence": "backend rejected: {\"missing_signature\":1}"
+    },
+    {
+      "attack": "Genuine message with F2 changed (+1 L/min)",
+      "defence": "HMAC over the exact bytes",
+      "held": true,
+      "evidence": "backend rejected: {\"bad_signature\":1}"
+    },
+    {
+      "attack": "Exact replay of a captured message",
+      "defence": "nonce cache + sequence numbers",
+      "held": true,
+      "evidence": "backend rejected: {\"replayed_nonce\":1}"
+    },
+    {
+      "attack": "400 messages queued in 3 ms",
+      "defence": "per-device rate limit + signature check",
+      "held": true,
+      "evidence": "rejected 400/400: {\"bad_signature\":400}"
+    },
+    {
+      "attack": "Genuine telemetry still accepted during the flood",
+      "defence": "forged messages rejected before the rate limit",
+      "held": true,
+      "evidence": "6 genuine messages accepted in the same 1.5 s; backend MQTT connected: true"
+    },
+    {
+      "attack": "Send a command without logging in",
+      "defence": "JWT required on every API route",
+      "held": true,
+      "evidence": "HTTP 401"
+    },
+    {
+      "attack": "Viewer account tries to stop the pump",
+      "defence": "role-based access control (operator required)",
+      "held": true,
+      "evidence": "HTTP 403 (attempt recorded in the audit log)"
+    },
+    {
+      "attack": "Viewer token edited to role=admin",
+      "defence": "JWT HMAC signature",
+      "held": true,
+      "evidence": "HTTP 401"
+    },
+    {
+      "attack": "Password brute force on \"operator\"",
+      "defence": "lock-out after 5 failures (5 min)",
+      "held": true,
+      "evidence": "responses: 401 401 401 401 401 429 429"
+    },
+    {
+      "attack": "Open the live WebSocket without a token",
+      "defence": "token check on WebSocket upgrade",
+      "held": true,
+      "evidence": "closed with code 4401"
+    },
+    {
+      "attack": "Forged F1 (+0.6 L/min) to fake a leak",
+      "defence": "physical consistency (pump curve vs flow) + suspect isolation",
+      "held": true,
+      "evidence": "FDI alarm after 4.5 s: \"Measurements violate the physics - suspect F1: possible false data injection or sensor fault. A flow imbalance\"; fake leak alarm: false; automatic stops: 0"
+    },
+    {
+      "attack": "Downstream replays \"normal\" data while a real leak happens",
+      "defence": "pressure-profile feasibility + replayed-sequence detection",
+      "held": true,
+      "evidence": "alarm after 3.5 s: \"Implausible P2 data: values repeat an earlier recorded sequence (replayed data)\"; automatic stop on doubtful data: 0"
+    },
+    {
+      "attack": "P1 frozen at its current value",
+      "defence": "plausibility: real sensors are never perfectly constant",
+      "held": true,
+      "evidence": "alarm after 10.1 s: \"Implausible P1 data: value frozen while the pump runs (stuck sensor or forged data)\""
+    }
+  ]
+}

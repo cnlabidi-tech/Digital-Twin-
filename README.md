@@ -17,6 +17,8 @@ See **[docs/architecture.md](docs/architecture.md)** for the full design and dia
 
 ```bash
 cp .env.example .env          # Windows PowerShell: Copy-Item .env.example .env
+npm install
+npm run setup -w @twin/security               # certificates, MQTT accounts, keys, users (printed once)
 docker compose --profile sim up -d --build   # broker + DB + backend + emulator
 docker compose ps                            # wait until all are up / healthy
 bash scripts/smoke-test.sh                   # infrastructure checks (Git Bash / WSL on Windows)
@@ -27,9 +29,9 @@ Stop: `docker compose down` - Wipe all data: `docker compose down -v`
 
 | Service | Address | Notes |
 |---------|---------|-------|
-| MQTT broker | `localhost:1883` | Dev only, anonymous; TLS + auth in Phase 6 |
+| MQTT broker | `mqtts://localhost:8883` | TLS + per-client accounts + ACL (`1883` only in dev mode) |
 | TimescaleDB | `localhost:5432` | Credentials from `.env` |
-| Dashboard + API | `http://localhost:4000` | Built dashboard, REST `/api`, WebSocket `/ws` |
+| Dashboard + API | `http://localhost:4000` | Login with the accounts printed by the setup |
 | Emulator control API | `http://localhost:4100/api/state` | Only with `--profile sim` |
 
 For development without Docker for the Node services: `npm install`, then
@@ -44,7 +46,7 @@ For development without Docker for the Node services: `npm install`, then
 3. Dashboard - **done** (http://localhost:5173 in dev, http://localhost:4000 in Docker)
 4. Twin model + detection - **done** (see docs/twin-model.md)
 5. Bidirectional control - **done** (see docs/control.md)
-6. Security layer + attack scripts
+6. Security layer + attack scripts - **done** (see docs/security.md, `npm run all -w @twin/attacks`)
 7. ESP32 firmware
 8. Hardware integration + calibration
 9. Results, metrics, demo script
