@@ -1,11 +1,13 @@
 # =============================================================================
 # Pipeline Digital Twin - local stack
 # -----------------------------------------------------------------------------
-# Phase 0 contains only the infrastructure services:
 #   - mosquitto   : MQTT broker (ESP32s / emulator <-> platform)
 #   - timescaledb : PostgreSQL + TimescaleDB (time-series storage)
-# Application services (backend, dashboard, emulator) are added in later
-# phases, each as its own service in this same file.
+#   - backend     : ingestion, twin, detection, control, API   (Phase 2+)
+#   - emulator    : fake ESP32s - only with the "sim" profile   (Phase 1)
+#
+#   docker compose up -d                 # platform only (real hardware)
+#   docker compose --profile sim up -d   # platform + emulator
 # =============================================================================
 name: pipeline-twin
 
@@ -46,6 +48,44 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  backend:
+    build: { context: ., dockerfile: docker/node.Dockerfile }
+    image: pipeline-twin-node
+    container_name: twin-backend
+    restart: unless-stopped
+    command: ["npm", "start", "-w", "@twin/backend"]
+    environment:
+      MQTT_URL: mqtt://mosquitto:1883
+      POSTGRES_HOST: timescaledb
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-twin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-dev-only}
+      POSTGRES_DB: ${POSTGRES_DB:-pipeline_twin}
+      API_HOST: 0.0.0.0
+      API_PORT: 4000
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - "127.0.0.1:${API_PORT:-4000}:4000"
+    depends_on:
+      mosquitto: { condition: service_healthy }
+      timescaledb: { condition: service_healthy }
+
+  emulator:
+    profiles: ["sim"]
+    image: pipeline-twin-node
+    container_name: twin-emulator
+    restart: unless-stopped
+    command: ["npm", "start", "-w", "@twin/emulator"]
+    environment:
+      MQTT_URL: mqtt://mosquitto:1883
+      EMU_API_HOST: 0.0.0.0
+      EMU_API_PORT: 4100
+    ports:
+      - "127.0.0.1:4100:4100"
+    depends_on:
+      mosquitto: { condition: service_healthy }
+      backend: { condition: service_started }
 
 volumes:
   mosquitto-data:

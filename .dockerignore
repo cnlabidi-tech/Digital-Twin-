@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+**/.pio
+.git
+.env
+secrets
+*.log
+firmware
