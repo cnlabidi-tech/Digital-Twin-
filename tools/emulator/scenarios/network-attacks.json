@@ -1,0 +1,11 @@
+{ "name": "network-attacks", "description": "Outsider attacks on the link: tamper, replay, spoof, drop (cryptographic and liveness defences)", "durationS": 160,
+  "steps": [
+    { "at": 20, "action": "attack", "args": { "type": "tamper", "sensor": "F2", "delta": 0.5 }, "as": "A1" },
+    { "at": 40, "action": "stop", "ref": "A1" },
+    { "at": 50, "action": "attack", "args": { "type": "replay", "device": "node-downstream", "recordS": 10 }, "as": "A2" },
+    { "at": 80, "action": "stop", "ref": "A2" },
+    { "at": 90, "action": "attack", "args": { "type": "spoof", "device": "node-inlet" }, "as": "A3" },
+    { "at": 110, "action": "stop", "ref": "A3" },
+    { "at": 120, "action": "attack", "args": { "type": "drop", "device": "node-downstream" }, "as": "A4" },
+    { "at": 140, "action": "stop", "ref": "A4" }
+  ] }

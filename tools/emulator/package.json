@@ -1,0 +1,19 @@
+{
+  "name": "@twin/emulator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Device emulator: behaves like ESP32 #1 and #2 on the wire, with leak/theft/fault/attack injection",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "dev": "tsx watch src/main.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "monitor": "tsx src/monitor.ts",
+    "scenario": "tsx src/main.ts --scenario"
+  },
+  "dependencies": {
+    "@twin/contracts": "*",
+    "mqtt": "^5.16.1"
+  }
+}

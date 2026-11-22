@@ -283,7 +283,7 @@ The suggested stack is kept, with the adjustments marked **(changed)** or
 | Phase | Content | Status |
 |-------|---------|--------|
 | 0 | Repo, Docker Compose, architecture | Done |
-| 1 | Data contract + device emulator | - |
+| 1 | Data contract + device emulator | Done |
 | 2 | Ingestion + time-series storage | - |
 | 3 | Dashboard | - |
 | 4 | Twin model + detection | - |

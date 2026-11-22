@@ -1,0 +1,66 @@
+{
+  "additionalProperties": false,
+  "$id": "Status",
+  "type": "object",
+  "required": [
+    "v",
+    "deviceId",
+    "online"
+  ],
+  "properties": {
+    "v": {
+      "const": 1,
+      "type": "number"
+    },
+    "deviceId": {
+      "anyOf": [
+        {
+          "const": "node-inlet",
+          "type": "string"
+        },
+        {
+          "const": "node-downstream",
+          "type": "string"
+        }
+      ]
+    },
+    "online": {
+      "type": "boolean"
+    },
+    "ts": {
+      "minimum": 1600000000000,
+      "description": "Unix epoch, ms",
+      "type": "integer"
+    },
+    "bootId": {
+      "pattern": "^[0-9a-f]{8}$",
+      "description": "Random id chosen at each boot",
+      "type": "string"
+    },
+    "fw": {
+      "maxLength": 32,
+      "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "const": "boot",
+          "type": "string"
+        },
+        {
+          "const": "lwt",
+          "type": "string"
+        },
+        {
+          "const": "shutdown",
+          "type": "string"
+        }
+      ]
+    },
+    "sig": {
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "HMAC-SHA256, hex",
+      "type": "string"
+    }
+  }
+}

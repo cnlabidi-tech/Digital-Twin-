@@ -1,0 +1,7 @@
+{ "name": "sensor-faults", "description": "Physical sensor faults (not attacks): P2 stuck, then P3 disconnected", "durationS": 150,
+  "steps": [
+    { "at": 30, "action": "fault", "args": { "sensor": "P2", "type": "stuck" }, "as": "F1" },
+    { "at": 60, "action": "stop", "ref": "F1" },
+    { "at": 80, "action": "fault", "args": { "sensor": "P3", "type": "disconnected" }, "as": "F2" },
+    { "at": 110, "action": "stop", "ref": "F2" }
+  ] }

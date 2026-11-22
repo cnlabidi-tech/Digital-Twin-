@@ -1,0 +1,224 @@
+{
+  "$id": "Command",
+  "anyOf": [
+    {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "v",
+        "cmdId",
+        "deviceId",
+        "ts",
+        "nonce",
+        "issuedBy",
+        "type",
+        "params"
+      ],
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "number"
+        },
+        "cmdId": {
+          "pattern": "^[A-Za-z0-9-]{8,64}$",
+          "type": "string"
+        },
+        "deviceId": {
+          "anyOf": [
+            {
+              "const": "node-inlet",
+              "type": "string"
+            },
+            {
+              "const": "node-downstream",
+              "type": "string"
+            }
+          ]
+        },
+        "ts": {
+          "minimum": 1600000000000,
+          "description": "Unix epoch, ms",
+          "type": "integer"
+        },
+        "nonce": {
+          "pattern": "^[0-9a-f]{16}$",
+          "description": "64-bit random, hex",
+          "type": "string"
+        },
+        "issuedBy": {
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "e.g. user:alice or auto:detector",
+          "type": "string"
+        },
+        "type": {
+          "const": "pump.set",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "on"
+          ],
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "duty": {
+              "minimum": 0,
+              "maximum": 100,
+              "type": "integer"
+            }
+          }
+        },
+        "sig": {
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "HMAC-SHA256, hex",
+          "type": "string"
+        }
+      }
+    },
+    {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "v",
+        "cmdId",
+        "deviceId",
+        "ts",
+        "nonce",
+        "issuedBy",
+        "type",
+        "params"
+      ],
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "number"
+        },
+        "cmdId": {
+          "pattern": "^[A-Za-z0-9-]{8,64}$",
+          "type": "string"
+        },
+        "deviceId": {
+          "anyOf": [
+            {
+              "const": "node-inlet",
+              "type": "string"
+            },
+            {
+              "const": "node-downstream",
+              "type": "string"
+            }
+          ]
+        },
+        "ts": {
+          "minimum": 1600000000000,
+          "description": "Unix epoch, ms",
+          "type": "integer"
+        },
+        "nonce": {
+          "pattern": "^[0-9a-f]{16}$",
+          "description": "64-bit random, hex",
+          "type": "string"
+        },
+        "issuedBy": {
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "e.g. user:alice or auto:detector",
+          "type": "string"
+        },
+        "type": {
+          "const": "telemetry.set_interval",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "intervalMs"
+          ],
+          "properties": {
+            "intervalMs": {
+              "minimum": 200,
+              "maximum": 10000,
+              "type": "integer"
+            }
+          }
+        },
+        "sig": {
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "HMAC-SHA256, hex",
+          "type": "string"
+        }
+      }
+    },
+    {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "v",
+        "cmdId",
+        "deviceId",
+        "ts",
+        "nonce",
+        "issuedBy",
+        "type",
+        "params"
+      ],
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "number"
+        },
+        "cmdId": {
+          "pattern": "^[A-Za-z0-9-]{8,64}$",
+          "type": "string"
+        },
+        "deviceId": {
+          "anyOf": [
+            {
+              "const": "node-inlet",
+              "type": "string"
+            },
+            {
+              "const": "node-downstream",
+              "type": "string"
+            }
+          ]
+        },
+        "ts": {
+          "minimum": 1600000000000,
+          "description": "Unix epoch, ms",
+          "type": "integer"
+        },
+        "nonce": {
+          "pattern": "^[0-9a-f]{16}$",
+          "description": "64-bit random, hex",
+          "type": "string"
+        },
+        "issuedBy": {
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "e.g. user:alice or auto:detector",
+          "type": "string"
+        },
+        "type": {
+          "const": "ping",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {}
+        },
+        "sig": {
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "HMAC-SHA256, hex",
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

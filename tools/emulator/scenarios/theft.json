@@ -1,0 +1,5 @@
+{ "name": "theft", "description": "Theft branch in segment B, valve opened slowly over 10 s, then closed", "durationS": 160,
+  "steps": [
+    { "at": 30, "action": "theft", "args": { "segment": "B", "fraction": 0.6, "rateLpm": 0.9, "rampS": 10 }, "as": "T1" },
+    { "at": 120, "action": "stop", "ref": "T1" }
+  ] }

@@ -1,0 +1,5 @@
+{ "name": "leak-segment-a", "description": "Sudden 0.5 L/min leak in segment A (P1-P2)", "durationS": 150,
+  "steps": [
+    { "at": 30, "action": "leak", "args": { "segment": "A", "fraction": 0.5, "rateLpm": 0.5 }, "as": "L1" },
+    { "at": 110, "action": "stop", "ref": "L1" }
+  ] }

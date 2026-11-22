@@ -1,0 +1,5 @@
+{ "name": "fdi-bias-flow", "description": "Compromised inlet node adds +0.6 L/min to F1 (fake loss: provokes a false leak alarm)", "durationS": 120,
+  "steps": [
+    { "at": 30, "action": "attack", "args": { "type": "fdi_bias", "sensor": "F1", "delta": 0.6 }, "as": "A1" },
+    { "at": 90, "action": "stop", "ref": "A1" }
+  ] }

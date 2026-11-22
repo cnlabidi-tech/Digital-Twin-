@@ -1,0 +1,5 @@
+{ "name": "normal", "description": "10 min of normal operation with an outlet-valve change: no alarm expected (false-alarm test)", "durationS": 600,
+  "steps": [
+    { "at": 200, "action": "valve", "args": { "outletOpening": 0.6 } },
+    { "at": 400, "action": "valve", "args": { "outletOpening": 1 } }
+  ] }

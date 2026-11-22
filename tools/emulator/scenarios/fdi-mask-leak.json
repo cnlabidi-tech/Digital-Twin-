@@ -1,0 +1,7 @@
+{ "name": "fdi-mask-leak", "description": "Compromised downstream node records normal readings, then a leak starts and the node replays the recording (leak hidden from mass balance)", "durationS": 150,
+  "steps": [
+    { "at": 5, "action": "attack", "args": { "type": "fdi_replay", "device": "node-downstream", "recordS": 20 }, "as": "A1" },
+    { "at": 40, "action": "leak", "args": { "segment": "B", "rateLpm": 0.6 }, "as": "L1" },
+    { "at": 120, "action": "stop", "ref": "L1" },
+    { "at": 125, "action": "stop", "ref": "A1" }
+  ] }

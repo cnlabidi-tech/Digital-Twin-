@@ -14,9 +14,20 @@
     "infra:down": "docker compose down",
     "infra:logs": "docker compose logs -f",
     "infra:reset": "docker compose down -v",
-    "smoke": "bash scripts/smoke-test.sh"
+    "smoke": "bash scripts/smoke-test.sh",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "emu": "npm start -w @twin/emulator --",
+    "monitor": "npm run monitor -w @twin/emulator --"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "tsx": "^4.23.15",
+    "vitest": "^5.1.1",
+    "@types/node": "^22.20.5",
+    "prettier": "^3.6.2"
   }
 }

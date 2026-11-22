@@ -32,7 +32,7 @@ Stop: `docker compose down` - Wipe all data: `docker compose down -v`
 ## Project phases
 
 0. Repo, Docker Compose, architecture - **done**
-1. Data contract + device emulator
+1. Data contract + device emulator - **done** (see docs/data-contract.md, tools/emulator)
 2. Ingestion + time-series storage
 3. Dashboard
 4. Twin model + detection

@@ -1,0 +1,23 @@
+{
+  "name": "@twin/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Data contract: MQTT topics, JSON Schemas, TypeScript types, signing helpers",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./signing": "./src/signing.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "export-schemas": "tsx scripts/export-schemas.ts"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.52",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "additionalProperties": false,
+  "$id": "Telemetry",
+  "type": "object",
+  "required": [
+    "v",
+    "deviceId",
+    "bootId",
+    "seq",
+    "ts",
+    "nonce",
+    "intervalMs",
+    "sensors",
+    "diag"
+  ],
+  "properties": {
+    "v": {
+      "const": 1,
+      "type": "number"
+    },
+    "deviceId": {
+      "anyOf": [
+        {
+          "const": "node-inlet",
+          "type": "string"
+        },
+        {
+          "const": "node-downstream",
+          "type": "string"
+        }
+      ]
+    },
+    "bootId": {
+      "pattern": "^[0-9a-f]{8}$",
+      "description": "Random id chosen at each boot",
+      "type": "string"
+    },
+    "seq": {
+      "minimum": 0,
+      "maximum": 4294967295,
+      "description": "Per-boot message counter",
+      "type": "integer"
+    },
+    "ts": {
+      "minimum": 1600000000000,
+      "description": "Unix epoch, ms",
+      "type": "integer"
+    },
+    "nonce": {
+      "pattern": "^[0-9a-f]{16}$",
+      "description": "64-bit random, hex",
+      "type": "string"
+    },
+    "intervalMs": {
+      "minimum": 100,
+      "maximum": 60000,
+      "description": "Averaging window of this sample",
+      "type": "integer"
+    },
+    "sensors": {
+      "type": "object",
+      "patternProperties": {
+        "^(P[1-3]|F[1-2])$": {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "v",
+            "raw",
+            "q"
+          ],
+          "properties": {
+            "v": {
+              "description": "Engineering value (bar or L/min); null if unusable",
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "raw": {
+              "description": "ADS1115 counts (pressure) or cumulative pulses since boot (flow)",
+              "type": "integer"
+            },
+            "q": {
+              "anyOf": [
+                {
+                  "const": "ok",
+                  "type": "string"
+                },
+                {
+                  "const": "out_of_range",
+                  "type": "string"
+                },
+                {
+                  "const": "fault",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "actuators": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "pump"
+      ],
+      "properties": {
+        "pump": {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "on",
+            "duty"
+          ],
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "duty": {
+              "minimum": 0,
+              "maximum": 100,
+              "description": "PWM duty, %",
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "diag": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "uptimeS",
+        "rssi",
+        "heapFree",
+        "ntpSynced"
+      ],
+      "properties": {
+        "uptimeS": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "rssi": {
+          "minimum": -127,
+          "maximum": 0,
+          "description": "Wi-Fi RSSI, dBm",
+          "type": "integer"
+        },
+        "heapFree": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "ntpSynced": {
+          "type": "boolean"
+        }
+      }
+    },
+    "sig": {
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "HMAC-SHA256, hex",
+      "type": "string"
+    }
+  }
+}

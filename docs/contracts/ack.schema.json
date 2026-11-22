@@ -1,0 +1,130 @@
+{
+  "additionalProperties": false,
+  "$id": "Ack",
+  "type": "object",
+  "required": [
+    "v",
+    "cmdId",
+    "deviceId",
+    "ts",
+    "nonce",
+    "status"
+  ],
+  "properties": {
+    "v": {
+      "const": 1,
+      "type": "number"
+    },
+    "cmdId": {
+      "pattern": "^[A-Za-z0-9-]{8,64}$",
+      "type": "string"
+    },
+    "deviceId": {
+      "anyOf": [
+        {
+          "const": "node-inlet",
+          "type": "string"
+        },
+        {
+          "const": "node-downstream",
+          "type": "string"
+        }
+      ]
+    },
+    "ts": {
+      "minimum": 1600000000000,
+      "description": "Unix epoch, ms",
+      "type": "integer"
+    },
+    "nonce": {
+      "pattern": "^[0-9a-f]{16}$",
+      "description": "64-bit random, hex",
+      "type": "string"
+    },
+    "status": {
+      "anyOf": [
+        {
+          "const": "executed",
+          "type": "string"
+        },
+        {
+          "const": "rejected",
+          "type": "string"
+        }
+      ]
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "const": "bad_signature",
+          "type": "string"
+        },
+        {
+          "const": "missing_signature",
+          "type": "string"
+        },
+        {
+          "const": "stale_timestamp",
+          "type": "string"
+        },
+        {
+          "const": "replayed_nonce",
+          "type": "string"
+        },
+        {
+          "const": "wrong_device",
+          "type": "string"
+        },
+        {
+          "const": "unknown_command",
+          "type": "string"
+        },
+        {
+          "const": "invalid_params",
+          "type": "string"
+        },
+        {
+          "const": "not_supported",
+          "type": "string"
+        },
+        {
+          "const": "interlock",
+          "type": "string"
+        }
+      ]
+    },
+    "state": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "pump": {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "on",
+            "duty"
+          ],
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "duty": {
+              "minimum": 0,
+              "maximum": 100,
+              "description": "PWM duty, %",
+              "type": "integer"
+            }
+          }
+        },
+        "intervalMs": {
+          "type": "integer"
+        }
+      }
+    },
+    "sig": {
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "HMAC-SHA256, hex",
+      "type": "string"
+    }
+  }
+}

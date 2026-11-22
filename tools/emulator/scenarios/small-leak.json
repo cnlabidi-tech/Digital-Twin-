@@ -1,0 +1,5 @@
+{ "name": "small-leak", "description": "Small 0.15 L/min leak (~4 % of flow), below the instant threshold: needs CUSUM", "durationS": 240,
+  "steps": [
+    { "at": 30, "action": "leak", "args": { "segment": "B", "fraction": 0.3, "rateLpm": 0.15 }, "as": "L1" },
+    { "at": 200, "action": "stop", "ref": "L1" }
+  ] }
