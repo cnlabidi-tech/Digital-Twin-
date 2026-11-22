@@ -56,6 +56,8 @@ export function PipelineSchematic() {
   const markers = alerts
     .filter((a) => (a.type === 'leak' || a.type === 'theft') && typeof a.data?.positionM === 'number')
     .map((a) => ({ id: a.id, type: a.type, x: xOf(a.data!.positionM as number) }));
+  // Filtered loss from the twin (4-s pulse windows) is far less noisy than F1-F2 of single samples.
+  const twinLoss = (twin?.loss as { lpm?: number } | null)?.lpm;
 
   const online = (id: 'node-inlet' | 'node-downstream') => devices[id]?.online ?? latest[id] !== undefined;
 
@@ -136,7 +138,7 @@ export function PipelineSchematic() {
 
         {/* mass balance readout */}
         <text x={(X0 + X1) / 2} y={PIPE_Y + 100} className="balance">
-          ΔQ = F1 − F2 = {(f1 - f2).toFixed(2)} L/min
+          {twinLoss !== undefined ? `twin mass balance: loss = ${twinLoss.toFixed(2)} L/min` : `ΔQ = F1 − F2 = ${(f1 - f2).toFixed(2)} L/min`}
         </text>
       </svg>
     </div>

@@ -78,12 +78,13 @@ export class AlertService {
       const existing = this.open.get(key);
       if (existing) {
         // Refresh: escalate severity / update message, never downgrade.
-        if (existing.message === a.message && rank(a.severity) <= rank(existing.severity)) return existing;
+        if (existing.message === a.message && existing.type === a.type && rank(a.severity) <= rank(existing.severity)) return existing;
         const sev = rank(a.severity) > rank(existing.severity) ? a.severity : existing.severity;
+        // `type` may change while an alert is open (e.g. a loss re-classified from leak to theft).
         const { rows } = await pool.query<Alert>(
-          `UPDATE alerts SET severity=$2, message=$3, segment=COALESCE($4, segment), data=$5, updated_at=now()
+          `UPDATE alerts SET type=$6, severity=$2, message=$3, segment=COALESCE($4, segment), data=$5, updated_at=now()
              WHERE id=$1 RETURNING *`,
-          [existing.id, sev, a.message, a.segment ?? null, json(a.data)],
+          [existing.id, sev, a.message, a.segment ?? null, json(a.data), a.type],
         );
         return this.publish(rows[0]!);
       }

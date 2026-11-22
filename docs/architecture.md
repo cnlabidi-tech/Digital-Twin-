@@ -286,7 +286,7 @@ The suggested stack is kept, with the adjustments marked **(changed)** or
 | 1 | Data contract + device emulator | Done |
 | 2 | Ingestion + time-series storage | Done |
 | 3 | Dashboard | Done |
-| 4 | Twin model + detection | - |
+| 4 | Twin model + detection | Done |
 | 5 | Bidirectional control | - |
 | 6 | Security layer + attack scripts | - |
 | 7 | ESP32 firmware | - |

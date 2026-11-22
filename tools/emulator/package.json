@@ -15,5 +15,8 @@
   "dependencies": {
     "@twin/contracts": "*",
     "mqtt": "^5.16.1"
+  },
+  "exports": {
+    "./virtual": "./src/virtual.ts"
   }
 }

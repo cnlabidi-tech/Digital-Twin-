@@ -3,6 +3,7 @@
  *
  *   MQTT --> ingestion/handler --bus--> ingestion/writer --> TimescaleDB
  *                                  |--> alerts/device-monitor --> alerts/events
+ *                                  |--> twin/engine (model, detection) --> alerts, twin_state
  *                                  \--> api/ws (live dashboard)
  *   Fastify HTTP API + WebSocket on API_HOST:API_PORT
  *   In production the built dashboard (apps/dashboard/dist) is served at "/".
@@ -17,6 +18,7 @@ import { DeviceMonitor } from './alerts/device-monitor';
 import { AlertService } from './alerts/service';
 import { alertRoutes } from './api/routes-alerts';
 import { dataRoutes } from './api/routes-data';
+import { twinRoutes } from './api/routes-twin';
 import { LiveState, wsRoutes } from './api/ws';
 import { config } from './config';
 import { migrate } from './db/migrate';
@@ -24,6 +26,7 @@ import { pool, waitForDb } from './db/pool';
 import { handleMessage, stats } from './ingestion/handler';
 import { connectMqtt } from './ingestion/mqtt';
 import { StorageWriter } from './ingestion/writer';
+import { TwinEngine } from './twin/engine';
 
 const app = Fastify({ logger: { level: config.logLevel } });
 const log = {
@@ -44,6 +47,8 @@ async function main() {
   const monitor = new DeviceMonitor(alerts);
   monitor.start();
   const live = new LiveState();
+  const twin = new TwinEngine(alerts, log);
+  await twin.start();
 
   const mqtt = connectMqtt(log);
   mqtt.on('connect', () => {
@@ -62,6 +67,7 @@ async function main() {
   }));
   await app.register(dataRoutes);
   await app.register(alertRoutes, { alerts });
+  await app.register(twinRoutes, { twin });
 
   const dashboard = resolve(import.meta.dirname, '../../../apps/dashboard/dist');
   if (existsSync(dashboard)) {

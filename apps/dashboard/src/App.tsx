@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { LiveCharts } from './components/LiveCharts';
 import { PipelineSchematic } from './components/PipelineSchematic';
 import { SimPanel } from './components/SimPanel';
+import { TwinPanel } from './components/TwinPanel';
 
 export function App() {
   return (
@@ -13,7 +14,7 @@ export function App() {
       <main className="grid">
         <section className="col-main">
           <PipelineSchematic />
-          {/* Phase 4: twin / residual panel */}
+          <TwinPanel />
           <LiveCharts />
           <EventHistory />
         </section>

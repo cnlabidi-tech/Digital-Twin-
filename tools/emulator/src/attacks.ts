@@ -112,9 +112,11 @@ function setValue(t: Telemetry, a: Attack, s: SensorId, v: number | null): void 
     r.raw = barToCounts(r.v);
   } else {
     // keep a fake cumulative pulse counter consistent with the fake flow
+    // fractional accumulator, like a real pulse counter (no rounding bias)
     const fp = (a.fakePulses ??= {});
-    fp[s] = Math.round((fp[s] ?? realRaw) + r.v * FLOW_K_NOMINAL * (t.intervalMs / 1000));
-    r.raw = fp[s]!;
+    // first forged message continues from the real counter (no jump)
+    fp[s] = fp[s] === undefined ? realRaw : fp[s] + r.v * FLOW_K_NOMINAL * (t.intervalMs / 1000);
+    r.raw = Math.floor(fp[s]!);
   }
 }
 
