@@ -51,6 +51,9 @@
   td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
   tr.group td { background: var(--bg); font-weight: 700; }
   tr.sel td { background: color-mix(in srgb, var(--water) 14%, transparent); }
+  tr.flash td { animation: flash 1.6s ease-out; }
+  @keyframes flash { 0%, 30% { background: color-mix(in srgb, var(--water) 40%, transparent); } 100% { background: color-mix(in srgb, var(--water) 14%, transparent); } }
+  @media (prefers-reduced-motion: reduce) { tr.flash td { animation: none; } }
   tr[data-part] { cursor: pointer; }
   .tag { display: inline-block; font-size: 11.5px; border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; color: var(--muted); white-space: nowrap; }
   .tag.must { color: var(--valve); border-color: color-mix(in srgb, var(--valve) 50%, transparent); }
@@ -587,7 +590,16 @@ function select(id, fromTable) {
     <dl class="kv"><dt>الكمية</dt><dd>${p.qty}</dd><dt>الدور</dt><dd>${p.role}</dd>${p.price ? `<dt>السعر</dt><dd class="ltr">$${p.price[0]}–${p.price[1]}</dd>` : ''}</dl>`;
   document.querySelectorAll('tr.sel').forEach((t) => t.classList.remove('sel'));
   const row = document.querySelector(`tr[data-part="${id === 'wire' ? 'wire' : id}"]`);
-  if (row) { row.classList.add('sel'); if (!fromTable) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  if (row) {
+    row.classList.add('sel');
+    if (!fromTable) {
+      // jump to the part's row in the list below and flash it
+      row.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+      row.classList.remove('flash');
+      void row.offsetWidth;
+      row.classList.add('flash');
+    }
+  }
   if (fromTable) vp.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
