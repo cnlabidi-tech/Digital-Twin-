@@ -45,7 +45,12 @@
   .route { font-size: 13px; color: var(--muted); }
   .route b { color: var(--fg); }
   .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 760px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 860px; }
+  td.thumb { width: 92px; }
+  td.thumb img, td.thumb .noimg { display: block; width: 84px; height: 63px; border-radius: 6px; background: var(--scene); border: 1px solid var(--line); object-fit: contain; }
+  td.thumb .noimg { display: grid; place-items: center; font-size: 11px; color: var(--muted); }
+  td.thumb a { display: inline-block; margin-top: 3px; font-size: 11.5px; color: var(--water); text-decoration: none; }
+  td.thumb a:hover { text-decoration: underline; }
   th, td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: start; vertical-align: top; }
   th { color: var(--muted); font-weight: 500; font-size: 12.5px; background: var(--panel); }
   td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -109,7 +114,7 @@
   <p class="lead">الأسعار تقريبية بالدولار من متاجر القطع الشائعة، وتختلف حسب البلد. القطع المعلّمة بكلمة ضروري لا تعمل المنصة بدونها، أو بدونها تتعرض القطع الأخرى للتلف.</p>
   <div class="table-wrap">
     <table id="bom">
-      <thead><tr><th>القطعة</th><th>الكمية</th><th>المواصفات</th><th>الدور في المشروع</th><th>السعر التقريبي</th></tr></thead>
+      <thead><tr><th>صورة</th><th>القطعة</th><th>الكمية</th><th>المواصفات</th><th>الدور في المشروع</th><th>السعر التقريبي</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -203,11 +208,14 @@ const tbody = document.querySelector('#bom tbody');
 let lo = 0, hi = 0;
 for (const p of PARTS) {
   const tr = document.createElement('tr');
-  if (p.group) { tr.className = 'group'; tr.innerHTML = `<td colspan="5">${p.group}</td>`; tbody.append(tr); continue; }
+  if (p.group) { tr.className = 'group'; tr.innerHTML = `<td colspan="6">${p.group}</td>`; tbody.append(tr); continue; }
   const mult = p.unit ? p.qty : 1;
   lo += p.price[0] * mult; hi += p.price[1] * mult;
   tr.dataset.part = p.id;
-  tr.innerHTML = `<td><span class="ltr">${p.name}</span> ${p.must ? '<span class="tag must">ضروري</span>' : '<span class="tag">مفيد</span>'}</td>
+  const q = encodeURIComponent(p.search ?? p.name);
+  tr.innerHTML = `<td class="thumb"><div class="noimg" id="thumb-${p.id}">بدون نموذج</div>
+      <a href="https://www.google.com/search?tbm=isch&q=${q}" target="_blank" rel="noopener">صور حقيقية ↗</a></td>
+    <td><span class="ltr">${p.name}</span> ${p.must ? '<span class="tag must">ضروري</span>' : '<span class="tag">مفيد</span>'}</td>
     <td class="num">${p.qty}</td><td><span class="ltr">${p.spec}</span></td><td>${p.role}</td>
     <td class="num"><span class="ltr">$${p.price[0]}–${p.price[1]}${p.unit && p.qty > 1 ? ' ×' + p.qty : ''}</span></td>`;
   tr.addEventListener('click', () => select(p.id, true));
@@ -478,6 +486,42 @@ label('theft', new THREE.Vector3(0.3, 0.3, -0.42), '#7b3fb5');
 label('outlet', new THREE.Vector3(-0.75, 0.2, ZB));
 label('segment A · 2 m', new THREE.Vector3(0.3, 0.02, 0.38), '#5b6b78');
 label('segment B · 2 m', new THREE.Vector3(0.3, 0.02, -0.22), '#5b6b78');
+
+// ------------------------------------------------------------------ thumbnails for the parts list
+// Each part is rendered alone from its own 3D model (original images, no copyright issue).
+(function renderThumbnails() {
+  const W = 168, H = 126;
+  const tr = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  tr.setSize(W, H);
+  tr.setClearColor(0x000000, 0);
+  const cam = new THREE.PerspectiveCamera(30, W / H, 0.001, 20);
+  const dir = new THREE.Vector3(0.9, 0.75, 1.1).normalize();
+  for (const id of Object.keys(partGroups)) {
+    if (id === 'wire' || id === 'board') continue;
+    const src = partGroups[id][0];
+    const ts = new THREE.Scene();
+    ts.add(new THREE.HemisphereLight(0xffffff, 0x8a96a0, 1.3));
+    const l = new THREE.DirectionalLight(0xffffff, 1.6); l.position.set(1, 2, 1.5); ts.add(l);
+    src.updateWorldMatrix(true, true);
+    const c = src.clone();
+    src.matrixWorld.decompose(c.position, c.quaternion, c.scale);
+    ts.add(c);
+    const bb = new THREE.Box3().setFromObject(c);
+    const center = bb.getCenter(new THREE.Vector3());
+    const size = bb.getSize(new THREE.Vector3()).length() || 0.05;
+    cam.position.copy(center).addScaledVector(dir, size * 1.9);
+    cam.lookAt(center);
+    tr.render(ts, cam);
+    const slot = document.getElementById(`thumb-${id}`);
+    if (!slot) continue;
+    const img = document.createElement('img');
+    img.src = tr.domElement.toDataURL('image/png');
+    img.alt = byId[id]?.name ?? id;
+    img.id = slot.id;
+    slot.replaceWith(img);
+  }
+  tr.dispose();
+})();
 
 // ------------------------------------------------------------------ water simulation (visual)
 const path = [
