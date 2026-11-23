@@ -83,3 +83,4 @@ For development without Docker for the Node services: `npm install`, then
 | [security.md](docs/security.md) | threat model, defences, attack scripts, limits |
 | [hardware-wiring.md](docs/hardware-wiring.md) / [integration-guide.md](docs/integration-guide.md) | wiring, bring-up, calibration |
 | [results/README.md](docs/results/README.md) / [demo-script.md](docs/demo-script.md) | metrics, defence demo |
+| [rig/index.html](docs/rig/index.html) | interactive 3D model of the physical rig + bill of materials (open in a browser) |

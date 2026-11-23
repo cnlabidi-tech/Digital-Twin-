@@ -1,0 +1,623 @@
+<title>منصة الأنبوب التجريبية</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: workshop sheet - 3D bench on top, part card beside it, bill of materials below. */
+  :root {
+    --bg: #eef1f3; --panel: #ffffff; --fg: #15212c; --muted: #5b6b78; --line: #d3dbe1;
+    --water: #1f6fd1; --valve: #d9632a; --ok: #1f8a4c; --scene: #e4e9ed;
+    --f-body: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #0e141a; --panel: #151d25; --fg: #e2e9ef; --muted: #8d9daa; --line: #26323d;
+    --water: #4c9bff; --valve: #f08a4b; --ok: #46c27f; --scene: #121a21; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #0e141a; --panel: #151d25; --fg: #e2e9ef; --muted: #8d9daa; --line: #26323d;
+    --water: #4c9bff; --valve: #f08a4b; --ok: #46c27f; --scene: #121a21; color-scheme: dark }
+  body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.6; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-block: 20px 48px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; text-wrap: balance; }
+  h2 { font-size: 1.2rem; margin: 32px 0 10px; text-wrap: balance; }
+  h3 { font-size: 1rem; margin: 18px 0 6px; }
+  .lead { color: var(--muted); max-width: 70ch; margin: 0 0 16px; }
+  .ltr { direction: ltr; unicode-bidi: isolate; font-family: var(--f-mono); font-size: .88em; }
+  .bench { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; }
+  @media (max-width: 900px) { .bench { grid-template-columns: 1fr; } }
+  .viewport { position: relative; background: var(--scene); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; min-height: 420px; height: 62vh; max-height: 640px; }
+  .viewport canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .hint { position: absolute; inset-inline-start: 10px; bottom: 10px; font-size: 12px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); padding: 3px 8px; border-radius: 6px; pointer-events: none; }
+  .side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .card h3 { margin-top: 0; }
+  .controls { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: inherit; font-size: 13px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 5px 10px; cursor: pointer; }
+  button[aria-pressed="true"] { border-color: var(--water); color: var(--water); font-weight: 500; }
+  button.danger[aria-pressed="true"] { border-color: var(--valve); color: var(--valve); }
+  button:focus-visible { outline: 2px solid var(--water); outline-offset: 2px; }
+  .part-name { font-weight: 700; }
+  .part-spec { color: var(--muted); font-size: 13px; margin: 4px 0; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 13px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; }
+  .route { font-size: 13px; color: var(--muted); }
+  .route b { color: var(--fg); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 760px; }
+  th, td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: start; vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 12.5px; background: var(--panel); }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.group td { background: var(--bg); font-weight: 700; }
+  tr.sel td { background: color-mix(in srgb, var(--water) 14%, transparent); }
+  tr[data-part] { cursor: pointer; }
+  .tag { display: inline-block; font-size: 11.5px; border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; color: var(--muted); white-space: nowrap; }
+  .tag.must { color: var(--valve); border-color: color-mix(in srgb, var(--valve) 50%, transparent); }
+  .total { margin-top: 8px; font-size: 13.5px; color: var(--muted); }
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .notes ul { margin: 0; padding-inline-start: 18px; }
+  .notes li { margin: 3px 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12.5px; color: var(--muted); }
+  .legend i { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-inline-end: 4px; }
+</style>
+
+<div class="wrap" dir="rtl" lang="ar">
+  <h1>منصة الأنبوب التجريبية</h1>
+  <p class="lead">نموذج ثلاثي الأبعاد للشكل المقترح للمنصة الحقيقية: أنبوب على شكل حرف يو فوق لوح بطول متر ونصف تقريبًا لكل ضلع، بحيث يكون كل مقطع بطول مترين كما في إعدادات التوأم. أدر المشهد بالفأرة، وانقر على أي قطعة لترى مواصفاتها ودورها، أو انقر على سطر في القائمة لتراها في المشهد.</p>
+
+  <div class="bench">
+    <div class="viewport" id="vp">
+      <div class="hint">اسحب للتدوير · العجلة للتكبير · انقر على قطعة</div>
+    </div>
+    <div class="side">
+      <div class="card">
+        <h3>التشغيل</h3>
+        <div class="controls">
+          <button id="b-pump" aria-pressed="true">المضخة تعمل</button>
+          <button id="b-leakA" class="danger" aria-pressed="false">فتح صمام التسرب أ</button>
+          <button id="b-leakB" class="danger" aria-pressed="false">فتح صمام التسرب ب</button>
+          <button id="b-theft" class="danger" aria-pressed="false">فتح صمام السرقة</button>
+          <button id="b-labels" aria-pressed="true">الأسماء</button>
+          <button id="b-wires" aria-pressed="true">الأسلاك</button>
+          <button id="b-reset">زاوية البداية</button>
+        </div>
+        <p class="route" id="status">الماء يدور في حلقة مغلقة من الخزان وإليه.</p>
+      </div>
+      <div class="card" id="info" aria-live="polite">
+        <h3>القطعة المختارة</h3>
+        <div class="part-name">لا شيء بعد</div>
+        <p class="part-spec">انقر على المضخة أو حساس أو صمام أو لوحة إلكترونية.</p>
+      </div>
+      <div class="card">
+        <h3>مسار الماء</h3>
+        <p class="route">الخزان ← المضخة ← <b>P1</b> و<b>F1</b> ← المقطع أ (مترين) ← <b>P2</b> عند المنعطف ← المقطع ب (مترين) ← <b>P3</b> و<b>F2</b> ← صمام المخرج ← الخزان.</p>
+        <div class="legend">
+          <span><i style="background:#e8c547"></i>إشارة الضغط</span>
+          <span><i style="background:#3fb36b"></i>نبضات التدفق</span>
+          <span><i style="background:#d64545"></i>تغذية 12 فولت</span>
+          <span><i style="background:#e8892f"></i>أمر المضخة</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>قائمة القطع</h2>
+  <p class="lead">الأسعار تقريبية بالدولار من متاجر القطع الشائعة، وتختلف حسب البلد. القطع المعلّمة بكلمة ضروري لا تعمل المنصة بدونها، أو بدونها تتعرض القطع الأخرى للتلف.</p>
+  <div class="table-wrap">
+    <table id="bom">
+      <thead><tr><th>القطعة</th><th>الكمية</th><th>المواصفات</th><th>الدور في المشروع</th><th>السعر التقريبي</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="total" id="total"></p>
+
+  <h2>قبل الشراء والتركيب</h2>
+  <div class="notes">
+    <div class="card">
+      <h3>الضغط والسلامة</h3>
+      <ul>
+        <li>المضخة تصل إلى ثمانية بار عند إغلاق كل المخارج، فاختر أنابيب ووصلات وصمامات مقاومة لعشرة بار على الأقل.</li>
+        <li>لا تغلق صمام المخرج بالكامل والمضخة تعمل بأقصى قوة لمدة طويلة.</li>
+        <li>ضع الصمام الثنائي العكسي على طرفي المضخة، والمصهر على خط الاثني عشر فولت.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>الماء والإلكترونيات</h3>
+      <ul>
+        <li>ضع كل لوحة في علبة مغلقة فوق مستوى الماء، وبعيدًا عن صمامات التسرب.</li>
+        <li>اجعل الأسلاك تنزل ثم تصعد قبل دخول العلبة، حتى لا تسيل قطرة الماء إليها.</li>
+        <li>اربط أرضي المصدر والحساسات واللوحتين معًا.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>المقسّمات أولًا</h3>
+      <ul>
+        <li>خرج حساس الضغط يصل إلى خمسة فولت، والمحوّل واللوحة يتحملان ثلاثة فاصلة ثلاثة فقط.</li>
+        <li>ركّب المقاومتين لكل حساس، وقس الخرج قبل توصيله باللوحة: يجب أن يبقى تحت ثلاثة فاصلة أربعة فولت.</li>
+        <li>نفس الشيء لإشارة حساسي التدفق.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>المقاسات</h3>
+      <ul>
+        <li>لوح بحوالي مترين ونصف في متر، أو لوحان متجاوران.</li>
+        <li>المسافة بين <span class="ltr">P1</span> و<span class="ltr">P2</span> مترين، وبين <span class="ltr">P2</span> و<span class="ltr">P3</span> مترين. إن غيّرتها فاكتب الأطوال الجديدة في إعدادات التوأم.</li>
+        <li>اترك أنبوبًا مستقيمًا بطول عشرة سنتيمترات على الأقل قبل كل حساس تدفق.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ------------------------------------------------------------------ parts (also the BOM)
+const PARTS = [
+  { group: 'الإلكترونيات' },
+  { id: 'esp1', name: 'ESP32-S3 DevKitC-1', qty: 2, must: true, spec: 'Wi-Fi, USB-C, 3.3 V logic', role: 'لوحتان: الأولى عند المدخل تقرأ P1 وF1 وتشغّل المضخة، والثانية تقرأ P2 وP3 وF2. تشفّر وتوقّع الرسائل.', price: [8, 12], unit: true },
+  { id: 'ads1', name: 'ADS1115 16-bit ADC', qty: 2, must: true, spec: 'I2C, 4 channels, ±4.096 V', role: 'تحويل جهد حساسات الضغط إلى أرقام بدقة عالية. واحد لكل لوحة.', price: [3, 6], unit: true },
+  { id: 'p1', name: 'Pressure transducer 0–10 bar', qty: 3, must: true, spec: '12 V supply, 1–5 V output, G1/4 thread', role: 'قياس الضغط في ثلاث نقاط: بعد المضخة، عند المنعطف، وعند المخرج. منها يُحسب موقع التسرب.', price: [12, 25], unit: true },
+  { id: 'f1', name: 'YF-S201 flow sensor', qty: 2, must: true, spec: '1/2" G thread, 1–30 L/min, 5 V pulses', role: 'قياس التدفق عند المدخل والمخرج. الفرق بينهما هو أساس كشف التسرب.', price: [4, 8], unit: true },
+  { id: 'pump', name: 'Diaphragm pump 12 V 60 W', qty: 1, must: true, spec: '0.8 MPa, 5 L/min, 1/2" ports', role: 'تدفع الماء في الحلقة، ويتحكم التوأم في تشغيلها وسرعتها.', price: [20, 35], unit: true },
+  { id: 'mos', name: 'D4184 MOSFET module', qty: 1, must: true, spec: 'PWM input 3.3–5 V, ≥ 10 A', role: 'المفتاح الإلكتروني بين اللوحة الأولى والمضخة.', price: [2, 4], unit: true },
+  { id: 'diode', name: 'Schottky diode SS34 / 1N5822', qty: 2, must: true, spec: '3 A, 40 V', role: 'يحمي المفتاح من الجهد العكسي للمحرك عند الإيقاف. يُركب على طرفي المضخة.', price: [0.3, 1], unit: true },
+  { id: 'psu', name: 'Power supply 12 V', qty: 1, must: true, spec: '≥ 6 A (72 W), metal case or adapter', role: 'تغذية المضخة وحساسات الضغط. المضخة وحدها تسحب خمسة أمبير.', price: [10, 20], unit: true },
+  { id: 'buck', name: 'Buck converter 12 V → 5 V', qty: 2, must: false, spec: 'LM2596 or MP1584, 2 A', role: 'تغذية اللوحتين وحساسي التدفق من مصدر واحد دون حاسوب.', price: [1, 3], unit: true },
+  { id: 'res', name: 'Resistor kit 1 % (10 kΩ, 20 kΩ)', qty: 1, must: true, spec: '5 × 10 kΩ + 5 × 20 kΩ minimum', role: 'خمسة مقسّمات جهد: ثلاثة للضغط واثنان للتدفق.', price: [2, 5], unit: false },
+  { id: 'fuse', name: 'Inline fuse holder + 8 A fuse', qty: 1, must: true, spec: 'blade or 5×20 mm', role: 'حماية من القصر على خط الاثني عشر فولت.', price: [1, 3], unit: true },
+  { id: 'box1', name: 'Project box IP54', qty: 3, must: false, spec: '≈ 150 × 100 × 60 mm', role: 'علبة لكل لوحة وعلبة للمصدر، لحمايتها من الماء.', price: [3, 6], unit: true },
+  { id: 'wire', name: 'Wiring set', qty: 1, must: true, spec: '22 AWG cable 10 m, perfboard × 2, terminal blocks, jumpers', role: 'التوصيلات بين الحساسات والعلب.', price: [8, 15], unit: false },
+  { id: 'usb', name: 'USB-C data cable', qty: 2, must: true, spec: 'data, not charge-only', role: 'تحميل البرنامج على اللوحتين والمعايرة عبر المنفذ التسلسلي.', price: [2, 4], unit: true },
+  { group: 'الهيدروليك' },
+  { id: 'pipe', name: 'Pipe 1/2" pressure-rated', qty: 1, must: true, spec: '≈ 6 m, PN10 or more (PVC-U, PPR, or reinforced hose ≥ 10 bar)', role: 'الأنبوب نفسه: مقطعان بطول مترين ووصلات المضخة والخزان.', price: [8, 18], unit: false },
+  { id: 'tee', name: 'Tee 1/2"', qty: 6, must: true, spec: 'same material as the pipe', role: 'ثلاث نقاط لحساسات الضغط، ونقطتان للتسرب، ونقطة لفرع السرقة.', price: [0.8, 2], unit: true },
+  { id: 'bush', name: 'Reducing bushing 1/2" → G1/4 F', qty: 3, must: true, spec: 'check the sensor thread first', role: 'تركيب حساسات الضغط على الوصلات الثلاثية.', price: [1, 3], unit: true },
+  { id: 'valveA', name: 'Ball valve 1/2"', qty: 4, must: true, spec: 'PN16, brass', role: 'صمامان للتسرب، وصمام للسرقة، وصمام للمخرج لتغيير نقطة التشغيل.', price: [3, 6], unit: true },
+  { id: 'elbow', name: 'Elbow 1/2"', qty: 4, must: true, spec: '90°', role: 'المنعطف عند P2، والصعود إلى الخزان.', price: [0.5, 1.5], unit: true },
+  { id: 'fit', name: 'Adapters, hose barbs, clamps, PTFE tape', qty: 1, must: true, spec: '≈ 8 adapters 1/2", 10 clamps, 2 rolls', role: 'وصل المضخة وحساسات التدفق بالأنبوب ومنع التسريب في الوصلات.', price: [8, 15], unit: false },
+  { id: 'tank', name: 'Reservoir bucket with lid', qty: 1, must: true, spec: '15–20 L', role: 'الخزان الذي تسحب منه المضخة ويعود إليه الماء.', price: [4, 8], unit: true },
+  { id: 'filter', name: 'Inlet strainer', qty: 1, must: false, spec: '1/2", mesh', role: 'يحمي صمامات المضخة الغشائية من الشوائب.', price: [2, 5], unit: true },
+  { id: 'theftbox', name: 'Collection container', qty: 1, must: false, spec: '5 L', role: 'يجمع الماء المسروق من فرع السرقة.', price: [2, 4], unit: true },
+  { id: 'tray', name: 'Drip tray', qty: 2, must: false, spec: 'shallow plastic tray', role: 'يجمع ماء التسرب تحت صمامي التسرب.', price: [2, 4], unit: true },
+  { id: 'board', name: 'Base board + pipe clips', qty: 1, must: false, spec: 'plywood ≈ 2.5 × 1 m, 15 clips', role: 'تثبيت الأنبوب والعلب على سطح واحد.', price: [15, 30], unit: false },
+  { group: 'أدوات المعايرة' },
+  { id: 'gauge', name: 'Reference pressure gauge 0–10 bar', qty: 1, must: false, spec: 'G1/4, class 1.6 or better', role: 'مقارنة قراءة حساسات الضغط بقيمة مرجعية.', price: [6, 15], unit: true },
+  { id: 'jug', name: 'Measuring jug 2 L', qty: 1, must: true, spec: 'graduated', role: 'اختبار الدلو لمعايرة حساسي التدفق.', price: [2, 5], unit: true },
+  { id: 'dmm', name: 'Multimeter', qty: 1, must: true, spec: 'DC voltage, continuity', role: 'قياس المقسّمات والتغذية قبل أي توصيل.', price: [10, 25], unit: true },
+];
+const byId = Object.fromEntries(PARTS.filter((p) => p.id).map((p) => [p.id, p]));
+
+// ------------------------------------------------------------------ BOM table
+const tbody = document.querySelector('#bom tbody');
+let lo = 0, hi = 0;
+for (const p of PARTS) {
+  const tr = document.createElement('tr');
+  if (p.group) { tr.className = 'group'; tr.innerHTML = `<td colspan="5">${p.group}</td>`; tbody.append(tr); continue; }
+  const mult = p.unit ? p.qty : 1;
+  lo += p.price[0] * mult; hi += p.price[1] * mult;
+  tr.dataset.part = p.id;
+  tr.innerHTML = `<td><span class="ltr">${p.name}</span> ${p.must ? '<span class="tag must">ضروري</span>' : '<span class="tag">مفيد</span>'}</td>
+    <td class="num">${p.qty}</td><td><span class="ltr">${p.spec}</span></td><td>${p.role}</td>
+    <td class="num"><span class="ltr">$${p.price[0]}–${p.price[1]}${p.unit && p.qty > 1 ? ' ×' + p.qty : ''}</span></td>`;
+  tr.addEventListener('click', () => select(p.id, true));
+  tbody.append(tr);
+}
+document.getElementById('total').innerHTML = `المجموع التقريبي للقائمة كلها: <span class="ltr">$${Math.round(lo)}–${Math.round(hi)}</span>، مع الأدوات.`;
+
+// ------------------------------------------------------------------ scene
+const vp = document.getElementById('vp');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+vp.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 50);
+const HOME = { pos: new THREE.Vector3(0.35, 1.55, 2.05), target: new THREE.Vector3(0.1, 0.05, 0) };
+camera.position.copy(HOME.pos);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.copy(HOME.target);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.minDistance = 0.4; controls.maxDistance = 5;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a96a0, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(1.2, 2.4, 1.4);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -1.6, right: 1.6, top: 1.2, bottom: -1.2, near: 0.5, far: 6 });
+scene.add(sun);
+
+function applyTheme() {
+  const css = getComputedStyle(document.documentElement);
+  scene.background = new THREE.Color(css.getPropertyValue('--scene').trim() || '#e4e9ed');
+}
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.05, ...o });
+const pickables = [];
+const partGroups = {};
+function part(id, obj) {
+  obj.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; m.userData.part = id; pickables.push(m); } });
+  (partGroups[id] ??= []).push(obj);
+  if (!obj.parent) scene.add(obj); // children of a group keep their parent (and its transform)
+  return obj;
+}
+function box(w, h, d, color, x, y, z, o) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, o));
+  m.position.set(x, y, z);
+  return m;
+}
+function cyl(r, h, color, o) { return new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), mat(color, o)); }
+/** A straight pipe between two points. */
+function tube(a, b, r, color, o) {
+  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b);
+  const len = A.distanceTo(B);
+  // the pipe is translucent so that the water flow inside stays visible
+  const m = cyl(r, len, color, color === PIPE ? { transparent: true, opacity: 0.45, ...o } : o);
+  m.position.copy(A).add(B).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize());
+  return m;
+}
+
+// ---- board
+const board = box(2.5, 0.03, 1.0, 0xc8a878, 0.08, -0.015, 0, { roughness: 0.9 });
+board.receiveShadow = true;
+part('board', board);
+
+// ---- geometry of the loop (metres). y = pipe axis height.
+const Y = 0.1, R = 0.012, PIPE = 0xdfe5ea, ZF = 0.3, ZB = -0.3, XT = 1.1;
+const tankPos = new THREE.Vector3(-1.02, 0, 0.0);
+const g = new THREE.Group();
+const tankWall = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.34, 40, 1, true), mat(0x2d6fb8, { transparent: true, opacity: 0.35, side: THREE.DoubleSide }));
+tankWall.position.y = 0.17;
+const water = cyl(0.155, 0.22, 0x3a8ee6, { transparent: true, opacity: 0.55 });
+water.position.y = 0.11;
+const tankBottom = cyl(0.15, 0.01, 0x2d6fb8);
+tankBottom.position.y = 0.005;
+g.add(tankWall, water, tankBottom);
+g.position.copy(tankPos);
+part('tank', g);
+
+// suction line + strainer + pump
+part('pipe', tube([-0.87, Y * 0.6, 0.06], [-0.87, Y * 0.6, ZF], R, PIPE));
+part('filter', (() => { const s = cyl(0.022, 0.06, 0x7e8b96, { metalness: 0.4 }); s.rotation.x = Math.PI / 2; s.position.set(-0.87, Y * 0.6, 0.13); return s; })());
+part('pipe', tube([-0.87, Y * 0.6, ZF], [-0.83, Y * 0.6, ZF], R, PIPE));
+const pump = new THREE.Group();
+const motor = cyl(0.045, 0.11, 0x22272c, { metalness: 0.3 }); motor.rotation.z = Math.PI / 2; motor.position.set(-0.04, 0.06, 0);
+const head = box(0.07, 0.1, 0.09, 0x30363c, 0.05, 0.055, 0);
+const feet = box(0.17, 0.012, 0.08, 0x555d63, 0, 0.006, 0);
+pump.add(motor, head, feet);
+pump.position.set(-0.74, 0, ZF);
+part('pump', pump);
+part('pipe', tube([-0.68, Y, ZF], [XT, Y, ZF], R, PIPE));
+part('pipe', tube([XT, Y, ZF], [XT, Y, ZB], R, PIPE));
+part('pipe', tube([XT, Y, ZB], [-0.86, Y, ZB], R, PIPE));
+part('pipe', tube([-0.86, Y, ZB], [-0.86, 0.42, ZB], R, PIPE));
+part('pipe', tube([-0.86, 0.42, ZB], [-0.98, 0.42, -0.1], R, PIPE));
+part('pipe', tube([-0.98, 0.42, -0.1], [-0.98, 0.3, -0.1], R, PIPE));
+for (const c of [[XT, Y, ZF], [XT, Y, ZB], [-0.86, Y, ZB], [-0.86, 0.42, ZB]]) {
+  const e = new THREE.Mesh(new THREE.SphereGeometry(R * 1.45, 16, 12), mat(0xb9c3cb));
+  e.position.set(...c);
+  part('elbow', e);
+}
+// clips under the pipe
+for (let x = -0.5; x < 1.05; x += 0.4) for (const z of [ZF, ZB]) part('board', box(0.03, Y - R, 0.04, 0x8d969c, x, (Y - R) / 2, z));
+
+// tee helper: a short cross stub
+function tee(x, z, dir) {
+  const t = new THREE.Group();
+  const body = cyl(R * 1.5, 0.05, 0xc7cfd6); body.rotation.z = Math.PI / 2;
+  if (dir === 'z') body.rotation.set(Math.PI / 2, 0, 0);
+  t.add(body);
+  t.position.set(x, Y, z);
+  return t;
+}
+// pressure transducer on a tee
+function transducer(id, x, z, along) {
+  part('tee', tee(x, z, along));
+  const b = cyl(R * 1.05, 0.03, 0xb08d57, { metalness: 0.6, roughness: 0.35 }); b.position.set(x, Y + 0.025, z);
+  part('bush', b);
+  const s = new THREE.Group();
+  const hex = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.015, 6), mat(0xa9b4bc, { metalness: 0.7, roughness: 0.3 }));
+  hex.position.y = 0.0;
+  const body = cyl(0.016, 0.075, 0xd2d9df, { metalness: 0.6, roughness: 0.3 }); body.position.y = 0.045;
+  const plug = cyl(0.012, 0.025, 0x1e2226); plug.position.y = 0.095;
+  s.add(hex, body, plug);
+  s.position.set(x, Y + 0.047, z);
+  part(id, s);
+  return new THREE.Vector3(x, Y + 0.16, z);
+}
+// YF-S201 inline
+function flowmeter(id, x, z) {
+  const f = new THREE.Group();
+  const body = box(0.075, 0.035, 0.045, 0x15181b, 0, 0, 0);
+  const cap = box(0.04, 0.03, 0.035, 0x15181b, 0, 0.028, 0);
+  const arrow = box(0.04, 0.002, 0.006, 0xf2f2f2, 0, 0.0185, 0.012);
+  f.add(body, cap, arrow);
+  f.position.set(x, Y, z);
+  if (z < 0) f.rotation.y = Math.PI; // flow goes towards -x on the back line
+  part(id, f);
+  return new THREE.Vector3(x, Y + 0.06, z);
+}
+// ball valve on a branch (dir: +1 front, -1 back)
+function valve(id, x, y, z, dz) {
+  const v = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.022, 20, 14), mat(0xc49a3a, { metalness: 0.7, roughness: 0.3 }));
+  const lever = box(0.07, 0.008, 0.016, 0xd9632a, 0.025, 0.028, 0);
+  v.add(body, lever);
+  v.position.set(x, y, z);
+  v.userData.lever = lever;
+  part(id, v);
+  return v;
+}
+
+const P1 = transducer('p1', -0.6, ZF, 'x');
+const F1 = flowmeter('f1', -0.47, ZF);
+const P2 = transducer('p1', XT, 0.0, 'z');
+const P3 = transducer('p1', -0.5, ZB, 'x');
+const F2 = flowmeter('f1', -0.63, ZB);
+const vOut = valve('valveA', -0.75, Y, ZB, 0);
+
+// leak A (front) and leak B (back): tee, stub, valve, nozzle, tray
+function leakPoint(x, z, dz) {
+  part('tee', tee(x, z, 'x'));
+  part('pipe', tube([x, Y, z], [x, Y, z + dz * 0.11], R * 0.8, PIPE));
+  const v = valve('valveA', x, Y, z + dz * 0.07, dz);
+  part('tray', box(0.18, 0.02, 0.12, 0x5f7480, x, 0.01, z + dz * 0.15));
+  return { v, drip: new THREE.Vector3(x, Y - 0.01, z + dz * 0.11), tray: 0.025 };
+}
+const leakA = leakPoint(0.25, ZF, +1);
+const leakB = leakPoint(0.72, ZB, -1);
+// theft branch: tee, valve, hose up, container
+part('tee', tee(-0.05, ZB, 'x'));
+part('pipe', tube([-0.05, Y, ZB], [-0.05, Y, -0.42], R * 0.8, PIPE));
+const vTheft = valve('valveA', -0.05, Y, -0.38, -1);
+part('pipe', tube([-0.05, Y, -0.42], [0.12, Y, -0.42], R * 0.8, PIPE));
+part('pipe', tube([0.12, Y, -0.42], [0.12, 0.21, -0.42], R * 0.8, PIPE));
+part('pipe', tube([0.12, 0.21, -0.42], [0.2, 0.21, -0.42], R * 0.8, PIPE));
+const theftBox = new THREE.Group();
+const tb = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.17, 0.13), mat(0xe9eef2, { transparent: true, opacity: 0.45 }));
+tb.position.y = 0.085;
+const theftWater = box(0.19, 0.01, 0.12, 0x3a8ee6, 0, 0.01, 0, { transparent: true, opacity: 0.6 });
+theftBox.add(tb, theftWater);
+theftBox.position.set(0.3, 0, -0.42);
+part('theftbox', theftBox);
+
+// ---- electronics
+function enclosure(id, x, z, extra) {
+  const e = new THREE.Group();
+  const shell = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.055, 0.11), mat(0x9aa6ae, { transparent: true, opacity: 0.35 }));
+  shell.position.y = 0.0275;
+  const pcb = box(0.07, 0.006, 0.028, 0x1d2731, -0.035, 0.012, 0);
+  const mod = box(0.025, 0.004, 0.018, 0xb9c0c6, -0.045, 0.017, 0, { metalness: 0.6 });
+  const ads = box(0.028, 0.005, 0.018, 0x2457a8, 0.04, 0.012, -0.02);
+  const perf = box(0.05, 0.003, 0.03, 0x3e6b3a, 0.035, 0.008, 0.025);
+  e.add(shell, pcb, mod, ads, perf, ...(extra ?? []));
+  e.position.set(x, 0, z);
+  part('box1', e);
+  part('esp1', pcb); part('esp1', mod); part('ads1', ads); part('res', perf);
+  return new THREE.Vector3(x, 0.05, z);
+}
+const E1 = enclosure('box1', -0.3, 0.43);
+const E2 = enclosure('box1', 0.5, 0.0);
+const psu = box(0.16, 0.06, 0.1, 0x6f7a82, -0.98, 0.03, 0.4, { metalness: 0.5 });
+part('psu', psu);
+const buck = box(0.04, 0.012, 0.022, 0x2a4a9b, -0.87, 0.066, 0.4); part('buck', buck);
+const fuse = box(0.03, 0.015, 0.015, 0x202326, -0.87, 0.01, 0.46); part('fuse', fuse);
+const mos = box(0.035, 0.012, 0.025, 0xb2302f, -0.62, 0.006, 0.42); part('mos', mos);
+const diode = cyl(0.004, 0.02, 0x111111); diode.rotation.z = Math.PI / 2; diode.position.set(-0.74, 0.12, 0.35); part('diode', diode);
+
+// ---- wires (curves)
+const wires = new THREE.Group();
+scene.add(wires);
+function wire(a, b, color, lift = 0.08) {
+  const mid = a.clone().add(b).multiplyScalar(0.5); mid.y = Math.max(a.y, b.y) + lift;
+  const curve = new THREE.CatmullRomCurve3([a, new THREE.Vector3(a.x, a.y + lift * 0.4, a.z), mid, new THREE.Vector3(b.x, b.y + lift * 0.4, b.z), b]);
+  const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.0035, 6, false), mat(color, { roughness: 0.5 }));
+  m.castShadow = true;
+  m.userData.part = 'wire'; pickables.push(m);
+  wires.add(m);
+}
+const YELLOW = 0xe8c547, GREEN = 0x3fb36b, RED = 0xd64545, ORANGE = 0xe8892f;
+wire(E1, P1, YELLOW); wire(E1, F1, GREEN, 0.05); wire(E1, new THREE.Vector3(-0.62, 0.015, 0.42), ORANGE, 0.03);
+wire(new THREE.Vector3(-0.92, 0.06, 0.4), new THREE.Vector3(-0.62, 0.015, 0.42), RED, 0.04);
+wire(new THREE.Vector3(-0.62, 0.015, 0.42), new THREE.Vector3(-0.75, 0.1, 0.33), RED, 0.04);
+wire(new THREE.Vector3(-0.87, 0.07, 0.4), E1, RED, 0.05);
+wire(E2, P2, YELLOW, 0.1); wire(E2, P3, YELLOW, 0.14); wire(E2, F2, GREEN, 0.12);
+wire(new THREE.Vector3(-0.92, 0.06, 0.38), E2, RED, 0.06);
+partGroups.wire = [wires];
+
+// ---- labels (sprites)
+const labels = new THREE.Group();
+scene.add(labels);
+function label(text, pos, color = '#15212c') {
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+  const font = '600 44px "IBM Plex Mono", monospace';
+  ctx.font = font;
+  const w = Math.ceil(ctx.measureText(text).width) + 28;
+  c.width = w; c.height = 64;
+  ctx.font = font;
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.beginPath(); ctx.roundRect(0, 4, w, 56, 12); ctx.fill();
+  ctx.fillStyle = color; ctx.textBaseline = 'middle'; ctx.fillText(text, 14, 33);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+  s.scale.set(0.05 * (w / 64), 0.05, 1);
+  s.position.copy(pos);
+  s.renderOrder = 10;
+  labels.add(s);
+}
+label('P1', P1.clone().add(new THREE.Vector3(0, 0.04, 0)));
+label('F1', F1.clone().add(new THREE.Vector3(0, 0.04, 0)), '#1f8a4c');
+label('P2', P2.clone().add(new THREE.Vector3(0, 0.04, 0)));
+label('P3', P3.clone().add(new THREE.Vector3(0, 0.04, 0)));
+label('F2', F2.clone().add(new THREE.Vector3(0, 0.04, 0)), '#1f8a4c');
+label('ESP32 #1', E1.clone().add(new THREE.Vector3(0, 0.08, 0)), '#2457a8');
+label('ESP32 #2', E2.clone().add(new THREE.Vector3(0, 0.08, 0)), '#2457a8');
+label('pump', new THREE.Vector3(-0.74, 0.2, ZF));
+label('12 V', new THREE.Vector3(-0.98, 0.14, 0.4), '#b2302f');
+label('leak A', new THREE.Vector3(0.25, 0.2, 0.44), '#c4501d');
+label('leak B', new THREE.Vector3(0.72, 0.2, -0.44), '#c4501d');
+label('theft', new THREE.Vector3(0.3, 0.3, -0.42), '#7b3fb5');
+label('outlet', new THREE.Vector3(-0.75, 0.2, ZB));
+label('segment A · 2 m', new THREE.Vector3(0.3, 0.02, 0.38), '#5b6b78');
+label('segment B · 2 m', new THREE.Vector3(0.3, 0.02, -0.22), '#5b6b78');
+
+// ------------------------------------------------------------------ water simulation (visual)
+const path = [
+  [-0.87, Y * 0.6, 0.06], [-0.87, Y * 0.6, ZF], [-0.68, Y, ZF], [XT, Y, ZF], [XT, Y, ZB],
+  [-0.86, Y, ZB], [-0.86, 0.42, ZB], [-0.98, 0.42, -0.1], [-0.98, 0.3, -0.1],
+].map((p) => new THREE.Vector3(...p));
+const segLen = path.slice(1).map((p, i) => p.distanceTo(path[i]));
+const total = segLen.reduce((a, b) => a + b, 0);
+function along(s) {
+  let d = s;
+  for (let i = 0; i < segLen.length; i++) {
+    if (d <= segLen[i]) return path[i].clone().lerp(path[i + 1], d / segLen[i]);
+    d -= segLen[i];
+  }
+  return path[path.length - 1].clone();
+}
+const N = 140;
+const dots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.008, 8, 6), new THREE.MeshBasicMaterial({ color: 0x2f8cff }), N);
+scene.add(dots);
+const offsets = Array.from({ length: N }, (_, i) => (i / N) * total);
+const drops = [];
+const dropGeo = new THREE.SphereGeometry(0.007, 8, 6);
+const dropMat = new THREE.MeshBasicMaterial({ color: 0x2f8cff });
+const state = { pump: true, leakA: false, leakB: false, theft: false, flow: 0 };
+const tmp = new THREE.Object3D();
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function spawnDrop(from, vel) {
+  const m = new THREE.Mesh(dropGeo, dropMat);
+  m.position.copy(from);
+  m.userData.v = vel.clone();
+  scene.add(m);
+  drops.push(m);
+}
+
+const clock = new THREE.Clock();
+let theftLevel = 0;
+function animate() {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const target = state.pump ? 1 : 0;
+  state.flow += (target - state.flow) * Math.min(1, dt * 2.5);
+  const speed = 0.35 * state.flow * (reduce ? 0.3 : 1);
+  for (let i = 0; i < N; i++) {
+    offsets[i] = (offsets[i] + speed * dt) % total;
+    tmp.position.copy(along(offsets[i]));
+    tmp.scale.setScalar(state.flow > 0.05 ? 1 : 0.001);
+    tmp.updateMatrix();
+    dots.setMatrixAt(i, tmp.matrix);
+  }
+  dots.instanceMatrix.needsUpdate = true;
+  if (state.flow > 0.2 && !reduce) {
+    if (state.leakA && Math.random() < 0.6) spawnDrop(leakA.drip, new THREE.Vector3((Math.random() - 0.5) * 0.05, -0.05, 0.12 + Math.random() * 0.05));
+    if (state.leakB && Math.random() < 0.6) spawnDrop(leakB.drip, new THREE.Vector3((Math.random() - 0.5) * 0.05, -0.05, -0.12 - Math.random() * 0.05));
+    if (state.theft && Math.random() < 0.7) spawnDrop(new THREE.Vector3(0.2, 0.21, -0.42), new THREE.Vector3(0.12, 0, (Math.random() - 0.5) * 0.02));
+  }
+  for (let i = drops.length - 1; i >= 0; i--) {
+    const d = drops[i];
+    d.userData.v.y -= 9.8 * dt * 0.25;
+    d.position.addScaledVector(d.userData.v, dt);
+    if (d.position.y < 0.02) { scene.remove(d); drops.splice(i, 1); }
+  }
+  if (state.theft && state.flow > 0.2) theftLevel = Math.min(0.15, theftLevel + dt * 0.004);
+  theftWater.scale.y = 1 + theftLevel * 90;
+  theftWater.position.y = 0.01 + theftLevel * 0.45;
+  for (const [v, open] of [[leakA.v, state.leakA], [leakB.v, state.leakB], [vTheft, state.theft]]) {
+    const want = open ? Math.PI / 2 : 0;
+    v.userData.lever.rotation.y += (want - v.userData.lever.rotation.y) * Math.min(1, dt * 6);
+  }
+  motor.rotation.x += state.flow * dt * 12;
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+
+function resize() {
+  const w = vp.clientWidth, h = vp.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(vp);
+resize();
+animate();
+
+// ------------------------------------------------------------------ selection
+const ray = new THREE.Raycaster();
+const ptr = new THREE.Vector2();
+let selected = null;
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', (e) => (downAt = [e.clientX, e.clientY]));
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObjects(pickables, false).find((h) => h.object.visible && h.object.parent?.visible !== false);
+  if (hit) select(hit.object.userData.part, false);
+});
+
+const WIRE_INFO = { name: 'Wiring', spec: '22 AWG', role: 'أصفر: إشارة الضغط عبر المقسّم إلى المحوّل. أخضر: نبضات التدفق عبر المقسّم إلى اللوحة. أحمر: تغذية اثني عشر فولت. برتقالي: أمر المضخة إلى المفتاح الإلكتروني.' };
+function select(id, fromTable) {
+  const p = id === 'wire' ? { ...byId.wire, ...WIRE_INFO, qty: '—' } : byId[id];
+  if (!p) return;
+  if (selected) for (const o of partGroups[selected] ?? []) o.traverse((m) => m.isMesh && m.material.emissive?.setHex(0));
+  selected = id;
+  for (const o of partGroups[id] ?? []) o.traverse((m) => m.isMesh && m.material.emissive?.setHex(0x3a5f9a));
+  const info = document.getElementById('info');
+  info.innerHTML = `<h3>القطعة المختارة</h3><div class="part-name ltr">${p.name}</div>
+    <p class="part-spec ltr">${p.spec}</p>
+    <dl class="kv"><dt>الكمية</dt><dd>${p.qty}</dd><dt>الدور</dt><dd>${p.role}</dd>${p.price ? `<dt>السعر</dt><dd class="ltr">$${p.price[0]}–${p.price[1]}</dd>` : ''}</dl>`;
+  document.querySelectorAll('tr.sel').forEach((t) => t.classList.remove('sel'));
+  const row = document.querySelector(`tr[data-part="${id === 'wire' ? 'wire' : id}"]`);
+  if (row) { row.classList.add('sel'); if (!fromTable) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  if (fromTable) vp.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+// ------------------------------------------------------------------ controls
+const status = document.getElementById('status');
+function updateStatus() {
+  const parts = [];
+  if (!state.pump) parts.push('المضخة متوقفة: لا تدفق.');
+  else if (!state.leakA && !state.leakB && !state.theft) parts.push('الماء يدور في حلقة مغلقة: التدفقان متساويان.');
+  if (state.pump && state.leakA) parts.push('تسرب في المقطع أ: يرتفع F1 وينخفض F2، ويقل الفرق بين P1 وP2.');
+  if (state.pump && state.leakB) parts.push('تسرب في المقطع ب: ينخفض F2، ويقل الفرق بين P2 وP3.');
+  if (state.pump && state.theft) parts.push('سرقة: نفس أثر التسرب لكن الصمام يُفتح ببطء والماء يذهب إلى الحاوية.');
+  status.textContent = parts.join(' ');
+}
+function toggle(btn, key, on, off) {
+  btn.addEventListener('click', () => {
+    state[key] = !state[key];
+    btn.setAttribute('aria-pressed', String(state[key]));
+    if (on) btn.textContent = state[key] ? on : off;
+    updateStatus();
+  });
+}
+toggle(document.getElementById('b-pump'), 'pump', 'المضخة تعمل', 'المضخة متوقفة');
+toggle(document.getElementById('b-leakA'), 'leakA', 'إغلاق صمام التسرب أ', 'فتح صمام التسرب أ');
+toggle(document.getElementById('b-leakB'), 'leakB', 'إغلاق صمام التسرب ب', 'فتح صمام التسرب ب');
+toggle(document.getElementById('b-theft'), 'theft', 'إغلاق صمام السرقة', 'فتح صمام السرقة');
+const bl = document.getElementById('b-labels');
+bl.addEventListener('click', () => { labels.visible = !labels.visible; bl.setAttribute('aria-pressed', String(labels.visible)); });
+const bw = document.getElementById('b-wires');
+bw.addEventListener('click', () => { wires.visible = !wires.visible; bw.setAttribute('aria-pressed', String(wires.visible)); });
+document.getElementById('b-reset').addEventListener('click', () => { camera.position.copy(HOME.pos); controls.target.copy(HOME.target); });
+updateStatus();
+</script>
