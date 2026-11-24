@@ -28,7 +28,18 @@ Extra: docs/rig/index.html = interactive 3D model of the physical rig (U-shaped,
 
 ## In progress: buying the parts (nothing bought yet)
 
-The student asked ChatGPT to find the parts and showed product photos. Review result:
+**2026-11-24:** every part now has a verified buy link (Algerian shops MHTronic,
+Evolutronics, Atlas, Websoog, or AliExpress with the variant to pick) in the BOM of
+docs/rig/index.html, prices in DZD; total about 62 000 DA. Decisions taken:
+pressure sensor = XIDIBEI XDB401Pro "12V OUT 1-5V", 0-1 MPa (no firmware change);
+PSU = closed 12 V 10 A adapter (MHTronic); MOSFET = dual D4184 module 15 A
+(Evolutronics); hydraulics = one system of 1/2" BSP brass + 12 mm reinforced hose
+(no PPR, no elbows). The two ESP32-S3 boards are already owned. Hose, PTFE, bucket,
+containers, jug, base board and male hose barbs are cheaper in a local shop
+(estimates in the table). Open points: ask the pump seller about its port type;
+ask the sensor seller the minimum supply voltage of the 1-5 V variant.
+
+Earlier review of ChatGPT's first list (kept for reference):
 
 - OK: ESP32-S3-DevKitC-1 N8R8 x2, ADS1115 x2, YF-S201 x2, pump 12 V 60 W 0.8 MPa
   5 L/min, D4184, LM2596 x2 (set to 5 V BEFORE connecting), resistor kit (has 10k/20k),
@@ -49,9 +60,9 @@ The student asked ChatGPT to find the parts and showed product photos. Review re
 
 ## Next steps
 
-1. Review ChatGPT's product links/specs when the student pastes them.
-2. If agreed, update docs/rig/index.html (hose system, fittings plan, quantities).
-3. Adapt pressure-sensor constants if the 5 V variant is chosen.
+1. Student orders the parts from the BOM links (done: links + hose system in docs/rig/index.html).
+2. Optional: republish the rig artifact so the online copy shows the links.
+3. Pressure-sensor constants only change if a 5 V / 0.5-4.5 V sensor is bought instead.
 4. When parts arrive: docs/integration-guide.md, then `npm run live -w @twin/evaluation -- --mode manual`.
 5. Defence preparation: question-by-question review in Arabic (started with
    "twin vs simulation"; next: leak detection and why pulse counters are used).

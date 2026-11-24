@@ -49,8 +49,15 @@
   td.thumb { width: 92px; }
   td.thumb img, td.thumb .noimg { display: block; width: 84px; height: 63px; border-radius: 6px; background: var(--scene); border: 1px solid var(--line); object-fit: contain; }
   td.thumb .noimg { display: grid; place-items: center; font-size: 11px; color: var(--muted); }
-  td.thumb a { display: inline-block; margin-top: 3px; font-size: 11.5px; color: var(--water); text-decoration: none; }
+  td.thumb a, td.thumb .local { display: block; margin-top: 3px; font-size: 11.5px; color: var(--water); text-decoration: none; white-space: nowrap; }
+  td.thumb .local { color: var(--muted); white-space: normal; }
   td.thumb a:hover { text-decoration: underline; }
+  .kv dd.buy a, .kv dd.buy .local { display: block; color: var(--water); text-decoration: none; }
+  .kv dd.buy .local { color: var(--muted); }
+  .pick { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); }
+  .pick .ltr { display: inline-block; }
+  .est { color: var(--muted); font-size: 11.5px; }
+  .tag.own { color: #3fb36b; border-color: color-mix(in srgb, #3fb36b 50%, transparent); }
   th, td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: start; vertical-align: top; }
   th { color: var(--muted); font-weight: 500; font-size: 12.5px; background: var(--panel); }
   td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -111,10 +118,10 @@
   </div>
 
   <h2>قائمة القطع</h2>
-  <p class="lead">الأسعار تقريبية بالدولار من متاجر القطع الشائعة، وتختلف حسب البلد. القطع المعلّمة بكلمة ضروري لا تعمل المنصة بدونها، أو بدونها تتعرض القطع الأخرى للتلف.</p>
+  <p class="lead">روابط شراء حقيقية تحققنا من صفحاتها يوم ٢٤ نوفمبر ٢٠٢٦، والأسعار بالدينار الجزائري كما ظهرت يومها، وقد تتغير. المتاجر الجزائرية تشحن خلال يومين، وطلبات علي إكسبريس تصل خلال ثلاثة إلى خمسة أسابيع. في صفحات علي إكسبريس اختر الخيار المكتوب تحت المواصفات، لأن الصفحة الواحدة تبيع عدة مقاسات بأسعار مختلفة. السعر المعلّم بعلامة تقريبًا تقدير لمحل محلي أو سعر غير مؤكد. القطع المعلّمة بكلمة ضروري لا تعمل المنصة بدونها.</p>
   <div class="table-wrap">
     <table id="bom">
-      <thead><tr><th>صورة</th><th>القطعة</th><th>الكمية</th><th>المواصفات</th><th>الدور في المشروع</th><th>السعر التقريبي</th></tr></thead>
+      <thead><tr><th>صورة ورابط</th><th>القطعة</th><th>الكمية</th><th>المواصفات</th><th>الدور في المشروع</th><th>السعر بالدينار</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -168,60 +175,74 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // ------------------------------------------------------------------ parts (also the BOM)
+// Real buy links checked on 2026-11-24. dzd = price in Algerian dinars per unit
+// (or per pack when packs is set); est = estimate / not confirmed on the page.
+const MHT = 'https://mhtronic.com/produit/';
+const AE = 'https://www.aliexpress.com/item/';
+const EVO = 'https://evolutronics-dz.com/';
 const PARTS = [
   { group: 'الإلكترونيات' },
-  { id: 'esp1', name: 'ESP32-S3 DevKitC-1', qty: 2, must: true, spec: 'Wi-Fi, USB-C, 3.3 V logic', role: 'لوحتان: الأولى عند المدخل تقرأ P1 وF1 وتشغّل المضخة، والثانية تقرأ P2 وP3 وF2. تشفّر وتوقّع الرسائل.', price: [8, 12], unit: true },
-  { id: 'ads1', name: 'ADS1115 16-bit ADC', qty: 2, must: true, spec: 'I2C, 4 channels, ±4.096 V', role: 'تحويل جهد حساسات الضغط إلى أرقام بدقة عالية. واحد لكل لوحة.', price: [3, 6], unit: true },
-  { id: 'p1', name: 'Pressure transducer 0–10 bar', qty: 3, must: true, spec: '12 V supply, 1–5 V output, G1/4 thread', role: 'قياس الضغط في ثلاث نقاط: بعد المضخة، عند المنعطف، وعند المخرج. منها يُحسب موقع التسرب.', price: [12, 25], unit: true },
-  { id: 'f1', name: 'YF-S201 flow sensor', qty: 2, must: true, spec: '1/2" G thread, 1–30 L/min, 5 V pulses', role: 'قياس التدفق عند المدخل والمخرج. الفرق بينهما هو أساس كشف التسرب.', price: [4, 8], unit: true },
-  { id: 'pump', name: 'Diaphragm pump 12 V 60 W', qty: 1, must: true, spec: '0.8 MPa, 5 L/min, 1/2" ports', role: 'تدفع الماء في الحلقة، ويتحكم التوأم في تشغيلها وسرعتها.', price: [20, 35], unit: true },
-  { id: 'mos', name: 'D4184 MOSFET module', qty: 1, must: true, spec: 'PWM input 3.3–5 V, ≥ 10 A', role: 'المفتاح الإلكتروني بين اللوحة الأولى والمضخة.', price: [2, 4], unit: true },
-  { id: 'diode', name: 'Schottky diode SS34 / 1N5822', qty: 2, must: true, spec: '3 A, 40 V', role: 'يحمي المفتاح من الجهد العكسي للمحرك عند الإيقاف. يُركب على طرفي المضخة.', price: [0.3, 1], unit: true },
-  { id: 'psu', name: 'Power supply 12 V', qty: 1, must: true, spec: '≥ 6 A (72 W), metal case or adapter', role: 'تغذية المضخة وحساسات الضغط. المضخة وحدها تسحب خمسة أمبير.', price: [10, 20], unit: true },
-  { id: 'buck', name: 'Buck converter 12 V → 5 V', qty: 2, must: false, spec: 'LM2596 or MP1584, 2 A', role: 'تغذية اللوحتين وحساسي التدفق من مصدر واحد دون حاسوب.', price: [1, 3], unit: true },
-  { id: 'res', name: 'Resistor kit 1 % (10 kΩ, 20 kΩ)', qty: 1, must: true, spec: '5 × 10 kΩ + 5 × 20 kΩ minimum', role: 'خمسة مقسّمات جهد: ثلاثة للضغط واثنان للتدفق.', price: [2, 5], unit: false },
-  { id: 'fuse', name: 'Inline fuse holder + 8 A fuse', qty: 1, must: true, spec: 'blade or 5×20 mm', role: 'حماية من القصر على خط الاثني عشر فولت.', price: [1, 3], unit: true },
-  { id: 'box1', name: 'Project box IP54', qty: 3, must: false, spec: '≈ 150 × 100 × 60 mm', role: 'علبة لكل لوحة وعلبة للمصدر، لحمايتها من الماء.', price: [3, 6], unit: true },
-  { id: 'wire', name: 'Wiring set', qty: 1, must: true, spec: '22 AWG cable 10 m, perfboard × 2, terminal blocks, jumpers', role: 'التوصيلات بين الحساسات والعلب.', price: [8, 15], unit: false },
-  { id: 'usb', name: 'USB-C data cable', qty: 2, must: true, spec: 'data, not charge-only', role: 'تحميل البرنامج على اللوحتين والمعايرة عبر المنفذ التسلسلي.', price: [2, 4], unit: true },
-  { group: 'الهيدروليك' },
-  { id: 'pipe', name: 'Pipe 1/2" pressure-rated', qty: 1, must: true, spec: '≈ 6 m, PN10 or more (PVC-U, PPR, or reinforced hose ≥ 10 bar)', role: 'الأنبوب نفسه: مقطعان بطول مترين ووصلات المضخة والخزان.', price: [8, 18], unit: false },
-  { id: 'tee', name: 'Tee 1/2"', qty: 6, must: true, spec: 'same material as the pipe', role: 'ثلاث نقاط لحساسات الضغط، ونقطتان للتسرب، ونقطة لفرع السرقة.', price: [0.8, 2], unit: true },
-  { id: 'bush', name: 'Reducing bushing 1/2" → G1/4 F', qty: 3, must: true, spec: 'check the sensor thread first', role: 'تركيب حساسات الضغط على الوصلات الثلاثية.', price: [1, 3], unit: true },
-  { id: 'valveA', name: 'Ball valve 1/2"', qty: 4, must: true, spec: 'PN16, brass', role: 'صمامان للتسرب، وصمام للسرقة، وصمام للمخرج لتغيير نقطة التشغيل.', price: [3, 6], unit: true },
-  { id: 'elbow', name: 'Elbow 1/2"', qty: 4, must: true, spec: '90°', role: 'المنعطف عند P2، والصعود إلى الخزان.', price: [0.5, 1.5], unit: true },
-  { id: 'fit', name: 'Adapters, hose barbs, clamps, PTFE tape', qty: 1, must: true, spec: '≈ 8 adapters 1/2", 10 clamps, 2 rolls', role: 'وصل المضخة وحساسات التدفق بالأنبوب ومنع التسريب في الوصلات.', price: [8, 15], unit: false },
-  { id: 'tank', name: 'Reservoir bucket with lid', qty: 1, must: true, spec: '15–20 L', role: 'الخزان الذي تسحب منه المضخة ويعود إليه الماء.', price: [4, 8], unit: true },
-  { id: 'filter', name: 'Inlet strainer', qty: 1, must: false, spec: '1/2", mesh', role: 'يحمي صمامات المضخة الغشائية من الشوائب.', price: [2, 5], unit: true },
-  { id: 'theftbox', name: 'Collection container', qty: 1, must: false, spec: '5 L', role: 'يجمع الماء المسروق من فرع السرقة.', price: [2, 4], unit: true },
-  { id: 'tray', name: 'Drip tray', qty: 2, must: false, spec: 'shallow plastic tray', role: 'يجمع ماء التسرب تحت صمامي التسرب.', price: [2, 4], unit: true },
-  { id: 'board', name: 'Base board + pipe clips', qty: 1, must: false, spec: 'plywood ≈ 2.5 × 1 m, 15 clips', role: 'تثبيت الأنبوب والعلب على سطح واحد.', price: [15, 30], unit: false },
+  { id: 'esp1', name: 'ESP32-S3 DevKitC-1', qty: 2, must: true, owned: true, spec: 'Wi-Fi, USB-C, 3.3 V logic', role: 'لوحتان: الأولى عند المدخل تقرأ P1 وF1 وتشغّل المضخة، والثانية تقرأ P2 وP3 وF2. تشفّر وتوقّع الرسائل.', dzd: 0, buy: [] },
+  { id: 'ads1', name: 'ADS1115 16-bit ADC', qty: 2, must: true, spec: 'I2C, 4 channels, 0x48–0x4B', role: 'تحويل جهد حساسات الضغط إلى أرقام بدقة عالية. واحد لكل لوحة.', dzd: 900, buy: [{ shop: 'MHTronic', url: MHT + 'analogique-numerique-ads1115-12-bits/' }] },
+  { id: 'p1', name: 'Pressure transducer XIDIBEI XDB401Pro', qty: 3, must: true, spec: '12 V supply, 1–5 V output, 0–1 MPa (10 bar), G1/4', pick: 'Color: 12V OUT 1-5V — Range: 0-1Mpa', role: 'قياس الضغط في ثلاث نقاط: بعد المضخة، عند المنعطف، وعند المخرج. منها يُحسب موقع التسرب. يطابق ثوابت البرنامج بلا تعديل.', dzd: 2882, buy: [{ shop: 'AliExpress', url: AE + '1005005325904963.html' }] },
+  { id: 'f1', name: 'YF-S201 flow sensor', qty: 2, must: true, spec: 'G1/2 male, 1–30 L/min, 5 V pulses', role: 'قياس التدفق عند المدخل والمخرج. الفرق بينهما هو أساس كشف التسرب.', dzd: 1300, buy: [{ shop: 'Websoog', url: 'https://www.websoog.com/ar/%D9%85%D8%AC%D8%B3%D8%A7%D8%AA-%D9%88-%D9%85%D9%84%D8%AA%D9%82%D8%B7%D8%A7%D8%AA/2368-capteur-de-d%C3%A9bit-d-eau-1-30l-min.html' }] },
+  { id: 'pump', name: 'Diaphragm pump 12 V 60 W', qty: 1, must: true, spec: '120 PSI (0.83 MPa), 5 L/min', pick: 'Voltage: 12V 60W', role: 'تدفع الماء في الحلقة، ويتحكم التوأم في تشغيلها وسرعتها. اسأل البائع عن نوع المنافذ قبل الشراء.', dzd: 4941, buy: [{ shop: 'AliExpress', url: AE + '1005006863920207.html' }] },
+  { id: 'mos', name: 'Dual MOSFET module 15 A 400 W (D4184)', qty: 1, must: true, spec: 'PWM input 3.3–20 V, 15 A', role: 'المفتاح الإلكتروني بين اللوحة الأولى والمضخة. تأكد أن الرقاقتين مكتوب عليهما D4184.', dzd: 580, buy: [{ shop: 'Evolutronics', url: EVO + 'module-mosfet-pwm-15a-400w-' }] },
+  { id: 'diode', name: 'Schottky diode 1N5822', qty: 2, must: true, spec: '3 A, 40 V, through-hole', role: 'يحمي المفتاح من الجهد العكسي للمحرك عند الإيقاف. يُركب على طرفي المضخة.', dzd: 40, buy: [{ shop: 'MHTronic', url: MHT + '1n5822-redresseur-schottky-diode-40v-3a/' }] },
+  { id: 'psu', name: 'Power adapter 12 V 10 A (closed)', qty: 1, must: true, spec: '100–240 V in, 12 V 10 A out', pick: 'Ampérage: 10A', role: 'تغذية المضخة وحساسات الضغط. المضخة وحدها تسحب خمسة أمبير. اقطع القابس ووصّل السلكين بلوحة توصيل عبر المصهر.', dzd: 2700, buy: [{ shop: 'MHTronic', url: MHT + 'chargeur-adaptateur-power-adapter-12v-1a/' }] },
+  { id: 'buck', name: 'Buck converter LM2596', qty: 2, must: false, spec: '4–35 V in, 1.25–30 V out, 3 A', role: 'تغذية اللوحتين وحساسي التدفق من مصدر واحد دون حاسوب. اضبطه على خمسة فولت قبل التوصيل.', dzd: 380, buy: [{ shop: 'Atlas', url: 'https://atlas-electronics-dz.com/produit/dk-mbc2596-01' }] },
+  { id: 'res', name: 'Resistors 1 % 1/4 W: 10 kΩ × 5, 20 kΩ × 5', qty: 10, must: true, spec: 'metal film 1 %', role: 'خمسة مقسّمات جهد: ثلاثة للضغط واثنان للتدفق.', dzd: 10, buy: [{ shop: '10 kΩ', url: MHT + 'resistances-1-4w-1-10k-ohms/' }, { shop: '20 kΩ', url: MHT + 'resistances-1-4w-1-20k-ohms/' }] },
+  { id: 'fuse', name: 'Fuse holder 5×20 mm + fast fuse 8 A', qty: 1, must: true, spec: 'inline, with wires', role: 'حماية من القصر على خط الاثني عشر فولت.', dzd: 270, buy: [{ shop: 'MHTronic', url: MHT + 'porte-fusible-en-verre-5x20mm-avec-cable/' }, { shop: 'fuse', url: MHT + 'fusibles-de-tube-en-verre-a-soufflage-rapide/' }] },
+  { id: 'box1', name: 'Project box IP65', qty: 3, must: false, spec: '158 × 90 × 60 mm, ABS, gasket', pick: 'Color: 158x90x60', role: 'علبة لكل لوحة وعلبة للمصدر، لحمايتها من الماء.', dzd: 1220, buy: [{ shop: 'AliExpress', url: AE + '1005003212261438.html' }] },
+  { id: 'gland', name: 'Cable glands PG7 (pack of 10)', qty: 1, must: false, spec: 'IP68, cable 3–6.5 mm', role: 'إدخال الأسلاك إلى العلب دون أن يدخل الماء.', dzd: 2298, buy: [{ shop: 'AliExpress', url: AE + '1005004697690879.html' }] },
+  { id: 'wire', name: 'Wiring set', qty: 1, must: true, spec: '22 AWG wire, perfboard 5×7 × 2, screw terminals × 10, Dupont M-F × 40', role: 'التوصيلات بين الحساسات والعلب.', dzd: 3030, est: true, buy: [{ shop: 'wire', url: AE + '1005007707609072.html' }, { shop: 'perfboard', url: MHT + 'plaquette-perforee-double-face-3x7cm-5x7cm-4x6cm-2x8cm/' }, { shop: 'terminals', url: EVO + 'terminal-block-screw-pitch-5-08mm-2-pin' }, { shop: 'Dupont', url: MHT + 'kit-de-40-wires-male-femelle-20cm-premium-dupont/' }] },
+  { id: 'usb', name: 'USB-C data cable', qty: 2, must: true, spec: 'data, not charge-only', role: 'تحميل البرنامج على اللوحتين والمعايرة عبر المنفذ التسلسلي. غالبًا عندك واحد مع كل لوحة.', dzd: 400, est: true, local: 'câble USB-C data' },
+  { group: 'الهيدروليك: نظام واحد بسن نصف بوصة وخرطوم مقوّى' },
+  { id: 'pipe', name: 'Reinforced PVC hose 12 mm ID', qty: 6, must: true, spec: 'braided, working pressure ≥ 10 bar, metres', role: 'الأنبوب نفسه: مقطعان بطول مترين ووصلات المضخة والخزان.', dzd: 250, est: true, local: 'tuyau PVC tressé (armé) 12 mm, 10 bar' },
+  { id: 'tee', name: 'Brass tee 1/2" BSP F-F-F', qty: 6, must: true, spec: 'BSPP, equal', pick: 'Color: Female-Female-Female — Thread: 1/2"', role: 'ثلاث نقاط لحساسات الضغط، ونقطتان للتسرب، ونقطة لفرع السرقة.', dzd: 424, buy: [{ shop: 'AliExpress', url: AE + '1005010356572315.html' }] },
+  { id: 'bush', name: 'Brass bushing 1/2" M → 1/4" F', qty: 3, must: true, spec: 'BSP hex reducing bushing', pick: 'Color: 1/4F to 1/2M', role: 'تركيب حساسات الضغط على الوصلات الثلاثية.', dzd: 300, est: true, buy: [{ shop: 'AliExpress', url: AE + '1005012115977583.html' }] },
+  { id: 'valveA', name: 'Brass ball valve 1/2" F-F', qty: 4, must: true, spec: 'BSP, full-size body', pick: 'Color: Female to Female SN — 1/2"', role: 'صمامان للتسرب، وصمام للسرقة، وصمام للمخرج لتغيير نقطة التشغيل.', dzd: 835, buy: [{ shop: 'AliExpress', url: AE + '1005008635729929.html' }] },
+  { id: 'nipple', name: 'Brass hex nipple 1/2" M-M (pack of 10)', qty: 1, must: true, spec: 'BSP; 5 needed', pick: 'Color: 4 fen (= 1/2") — Size: 10pcs', role: 'وصل صمامات التسرب والسرقة بالوصلات الثلاثية.', dzd: 2658, buy: [{ shop: 'AliExpress', url: AE + '4000674080372.html' }] },
+  { id: 'fit', name: 'Brass hose barb 1/2" BSP male × 12 mm', qty: 20, must: true, spec: 'straight', pick: 'Size: 12mm Barb — Thread: 1/2"', role: 'وصل الخرطوم بالوصلات الثلاثية والصمامات والمصفاة.', dzd: 150, est: true, local: 'raccord cannelé laiton mâle 1/2" × 12 mm', buy: [{ shop: 'AliExpress (769 DA)', url: AE + '1005001468597267.html' }] },
+  { id: 'fbarb', name: 'Brass hose barb 1/2" BSP female × 12 mm', qty: 6, must: true, spec: 'straight, female thread', pick: 'Color: BTPCF — 12mm — 1/2"', role: 'وصل الخرطوم بحساسي التدفق، وبالمضخة إن كانت منافذها مسننة.', dzd: 816, buy: [{ shop: 'AliExpress', url: AE + '1005007916744864.html' }] },
+  { id: 'clamp', name: 'Stainless hose clamps 16–25 mm (pack of 10)', qty: 3, must: true, spec: '304 stainless, worm drive', pick: 'Color: 10PCS 16-25mm', role: 'شد الخرطوم على كل وصلة حتى لا ينفلت تحت الضغط.', dzd: 947, buy: [{ shop: 'AliExpress', url: AE + '1005009338548263.html' }] },
+  { id: 'ptfe', name: 'PTFE thread tape', qty: 2, must: true, spec: '12 mm roll', role: 'منع التسريب في الوصلات المسننة.', dzd: 100, est: true, local: 'ruban téflon' },
+  { id: 'tank', name: 'Reservoir bucket with lid', qty: 1, must: true, spec: '15–20 L', role: 'الخزان الذي تسحب منه المضخة ويعود إليه الماء.', dzd: 600, est: true, local: 'seau 20 L avec couvercle' },
+  { id: 'filter', name: 'Brass Y strainer 1/2" F-F', qty: 1, must: false, spec: 'BSP, mesh', pick: 'Specification: 1/2"', role: 'يحمي صمامات المضخة الغشائية من الشوائب.', dzd: 380, buy: [{ shop: 'AliExpress', url: AE + '1005003828496102.html' }] },
+  { id: 'theftbox', name: 'Collection container', qty: 1, must: false, spec: '5 L', role: 'يجمع الماء المسروق من فرع السرقة.', dzd: 250, est: true, local: 'bidon 5 L' },
+  { id: 'tray', name: 'Drip tray', qty: 2, must: false, spec: 'shallow plastic tray', role: 'يجمع ماء التسرب تحت صمامي التسرب.', dzd: 250, est: true, local: 'bac plastique' },
+  { id: 'board', name: 'Base board + pipe clips', qty: 1, must: false, spec: 'plywood ≈ 2.5 × 1 m, 15 clips', role: 'تثبيت الأنبوب والعلب على سطح واحد.', dzd: 3000, est: true, local: 'contreplaqué + colliers' },
   { group: 'أدوات المعايرة' },
-  { id: 'gauge', name: 'Reference pressure gauge 0–10 bar', qty: 1, must: false, spec: 'G1/4, class 1.6 or better', role: 'مقارنة قراءة حساسات الضغط بقيمة مرجعية.', price: [6, 15], unit: true },
-  { id: 'jug', name: 'Measuring jug 2 L', qty: 1, must: true, spec: 'graduated', role: 'اختبار الدلو لمعايرة حساسي التدفق.', price: [2, 5], unit: true },
-  { id: 'dmm', name: 'Multimeter', qty: 1, must: true, spec: 'DC voltage, continuity', role: 'قياس المقسّمات والتغذية قبل أي توصيل.', price: [10, 25], unit: true },
+  { id: 'gauge', name: 'Reference pressure gauge 0–10 bar', qty: 1, must: false, spec: '63 mm, radial, 1/4" BSP, class 1', pick: 'Pressure Range: 0-10bar', role: 'مقارنة قراءة حساسات الضغط بقيمة مرجعية.', dzd: 852, buy: [{ shop: 'AliExpress', url: AE + '1005012647501008.html' }] },
+  { id: 'jug', name: 'Measuring jug 2 L', qty: 1, must: true, spec: 'graduated', role: 'اختبار الدلو لمعايرة حساسي التدفق.', dzd: 300, est: true, local: 'verre doseur 2 L' },
+  { id: 'dmm', name: 'Multimeter AIDA 9205A+', qty: 1, must: true, spec: 'DC voltage, continuity', role: 'قياس المقسّمات والتغذية قبل أي توصيل.', dzd: 1890, buy: [{ shop: 'MHTronic', url: MHT + 'multimetre-digital-aida-9205a/' }] },
 ];
+for (const p of PARTS) if (p.id) p.cost = p.dzd * p.qty; // pack items count packs in qty
 const byId = Object.fromEntries(PARTS.filter((p) => p.id).map((p) => [p.id, p]));
+const fmt = (n) => n.toLocaleString('fr-DZ').replace(/ | /g, ' ');
+const linksHtml = (p) => [
+  ...(p.buy ?? []).map((b) => `<a href="${b.url}" target="_blank" rel="noopener">${b.shop} ↗</a>`),
+  ...(p.local ? [`<span class="local">محل محلي: <span class="ltr">${p.local}</span></span>`] : []),
+  ...(p.owned ? ['<span class="local">متوفرة عندكما</span>'] : []),
+].join('');
 
 // ------------------------------------------------------------------ BOM table
 const tbody = document.querySelector('#bom tbody');
-let lo = 0, hi = 0;
+let sum = 0, sumEst = 0;
 for (const p of PARTS) {
   const tr = document.createElement('tr');
   if (p.group) { tr.className = 'group'; tr.innerHTML = `<td colspan="6">${p.group}</td>`; tbody.append(tr); continue; }
-  const mult = p.unit ? p.qty : 1;
-  lo += p.price[0] * mult; hi += p.price[1] * mult;
+  sum += p.cost; if (p.est) sumEst += p.cost;
   tr.dataset.part = p.id;
-  const q = encodeURIComponent(p.search ?? p.name);
-  tr.innerHTML = `<td class="thumb"><div class="noimg" id="thumb-${p.id}">بدون نموذج</div>
-      <a href="https://www.google.com/search?tbm=isch&q=${q}" target="_blank" rel="noopener">صور حقيقية ↗</a></td>
-    <td><span class="ltr">${p.name}</span> ${p.must ? '<span class="tag must">ضروري</span>' : '<span class="tag">مفيد</span>'}</td>
-    <td class="num">${p.qty}</td><td><span class="ltr">${p.spec}</span></td><td>${p.role}</td>
-    <td class="num"><span class="ltr">$${p.price[0]}–${p.price[1]}${p.unit && p.qty > 1 ? ' ×' + p.qty : ''}</span></td>`;
+  const tag = p.owned ? '<span class="tag own">متوفر</span>' : p.must ? '<span class="tag must">ضروري</span>' : '<span class="tag">مفيد</span>';
+  tr.innerHTML = `<td class="thumb"><div class="noimg" id="thumb-${p.id}">بدون نموذج</div>${linksHtml(p)}</td>
+    <td><span class="ltr">${p.name}</span> ${tag}</td>
+    <td class="num">${p.qty}</td><td><span class="ltr">${p.spec}</span>${p.pick ? `<span class="pick">اختر: <span class="ltr">${p.pick}</span></span>` : ''}</td><td>${p.role}</td>
+    <td class="num">${p.owned ? '—' : `<span class="ltr">${fmt(p.cost)}</span>${p.qty > 1 ? `<br><span class="est ltr">${fmt(p.dzd)} × ${p.qty}</span>` : ''}${p.est ? '<br><span class="est">تقريبًا</span>' : ''}`}</td>`;
   tr.addEventListener('click', () => select(p.id, true));
   tbody.append(tr);
 }
-document.getElementById('total').innerHTML = `المجموع التقريبي للقائمة كلها: <span class="ltr">$${Math.round(lo)}–${Math.round(hi)}</span>، مع الأدوات.`;
+document.getElementById('total').innerHTML = `المجموع: حوالي <span class="ltr">${fmt(Math.round(sum / 100) * 100)}</span> دينار مع الأدوات، منها حوالي <span class="ltr">${fmt(Math.round(sumEst / 100) * 100)}</span> دينار تقديرات لمحلات محلية. لا يشمل ثمن الشحن من المتاجر الجزائرية، ولا اللوحتين المتوفرتين عندكما.`;
 
 // ------------------------------------------------------------------ scene
 const vp = document.getElementById('vp');
@@ -321,7 +342,7 @@ part('pipe', tube([-0.98, 0.42, -0.1], [-0.98, 0.3, -0.1], R, PIPE));
 for (const c of [[XT, Y, ZF], [XT, Y, ZB], [-0.86, Y, ZB], [-0.86, 0.42, ZB]]) {
   const e = new THREE.Mesh(new THREE.SphereGeometry(R * 1.45, 16, 12), mat(0xb9c3cb));
   e.position.set(...c);
-  part('elbow', e);
+  part('fit', e);
 }
 // clips under the pipe
 for (let x = -0.5; x < 1.05; x += 0.4) for (const z of [ZF, ZB]) part('board', box(0.03, Y - R, 0.04, 0x8d969c, x, (Y - R) / 2, z));
@@ -631,7 +652,7 @@ function select(id, fromTable) {
   const info = document.getElementById('info');
   info.innerHTML = `<h3>القطعة المختارة</h3><div class="part-name ltr">${p.name}</div>
     <p class="part-spec ltr">${p.spec}</p>
-    <dl class="kv"><dt>الكمية</dt><dd>${p.qty}</dd><dt>الدور</dt><dd>${p.role}</dd>${p.price ? `<dt>السعر</dt><dd class="ltr">$${p.price[0]}–${p.price[1]}</dd>` : ''}</dl>`;
+    <dl class="kv"><dt>الكمية</dt><dd>${p.qty}</dd><dt>الدور</dt><dd>${p.role}</dd>${p.owned ? '' : `<dt>السعر</dt><dd><span class="ltr">${fmt(p.cost)}</span> دينار${p.est ? ' تقريبًا' : ''}</dd>`}${linksHtml(p) ? `<dt>الشراء</dt><dd class="buy">${linksHtml(p)}</dd>` : ''}</dl>`;
   document.querySelectorAll('tr.sel').forEach((t) => t.classList.remove('sel'));
   const row = document.querySelector(`tr[data-part="${id === 'wire' ? 'wire' : id}"]`);
   if (row) {
